@@ -923,7 +923,7 @@ Commands for handling cell content:
                 The different types and its details:
                         - HEADINGS Topmost (header) row that lists column names
                           (only for even columns), and leftmost (header) column
-                          that lists row numbers.                          
+                          that lists row numbers.
                         - HEADINGS_ODD The same that above but shown for odd columns.
                         - MODE The text in the top right that indicates which
                           mode sc-im is currently in.
@@ -1258,11 +1258,13 @@ Commands for handling cell content:
         a. With <C-d> keybinding:
             The <C-d> command works on NORMAL and VISUAL modes, and converts
             cell's text content that represents a date, and sets the numeric
-            value of the cell using using locale's D_FMT format.
-            After conversion, the same format is applied automatically to the
-            cell so that the value is displayed as a date.
-            You can then change the date format with :format command or
-            just leave it as it is with the current locale D_FMT format.
+            value of the cell using using locale's D_FMT format. This can be
+            overridden by setting the configuration variable
+            'default_date_fmt' to the desired format string.  After
+            conversion, the same format is applied automatically to the cell
+            so that the value is displayed as a date.  You can then change the
+            date format with :format command or just leave it as it is with
+            the current locale D_FMT format.
 
             Example:
                 \03/04/1984

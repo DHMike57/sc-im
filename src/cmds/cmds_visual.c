@@ -425,28 +425,33 @@ void do_visualmode(struct block * buf) {
 
     // datefmt with locale D_FMT format
     } else if (buf->value == ctl('d')) {
+        char * f = get_conf_value("default_date_fmt");
+        if(!strcmp(f,"-1")) f=NULL;
+        if(!f){
         #ifdef USELOCALE
             #include <locale.h>
             #include <langinfo.h>
             char * loc = NULL;
-            char * f = NULL;
             loc = setlocale(LC_TIME, "");
             if (loc != NULL) {
                 f = nl_langinfo(D_FMT);
             } else {
                 sc_error("No locale set. Nothing changed");
             }
+        #else
+            sc_info("Build made without USELOCALE enabled or default_date_fmt set");
+        #endif
+        }
+        if(f){
             if (any_locked_cells(sh, r->tlrow, r->tlcol, r->brrow, r->brcol)) {
                 sc_error("Locked cells encountered. Nothing changed");
                 return;
             }
             dateformat(sh, lookat(sh, r->tlrow, r->tlcol), lookat(sh, r->brrow, r->brcol), f);
+        }
         exit_visualmode();
         chg_mode('.');
         ui_show_header();
-        #else
-            sc_info("Build made without USELOCALE enabled");
-        #endif
 
     // EDITION COMMANDS
     // yank

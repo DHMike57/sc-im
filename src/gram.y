@@ -291,6 +291,7 @@ token S_YANKCOL
 %token K_NOXLSX_READFORMULAS
 %token K_DEFAULT_COPY_TO_CLIPBOARD_CMD
 %token K_DEFAULT_PASTE_FROM_CLIPBOARD_CMD
+%token K_DEFAULT_DATE_FMT
 %token K_COPY_TO_CLIPBOARD_DELIMITED_TAB
 %token K_NOCOPY_TO_CLIPBOARD_DELIMITED_TAB
 %token K_COPY_TO_CLIPBOARD_WYSIWYG
@@ -1709,6 +1710,14 @@ setitem :
                                   parse_str(user_conf_d, cmd, FALSE);
                                   scxfree(s);
                                   }
+    |    K_DEFAULT_DATE_FMT '=' strarg {
+                                  char cmd[MAXCMD];
+                                  char * s = (char *) $3;
+                                  sprintf(cmd, "default_date_fmt=%s", s);
+                                  parse_str(user_conf_d, cmd, FALSE);
+                                  scxfree(s);
+                                  }
+
 
     |    K_IMPORT_DELIMITED_TO_TEXT {      parse_str(user_conf_d, "import_delimited_to_text=1", TRUE); }
 
