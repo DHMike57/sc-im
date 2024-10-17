@@ -104,8 +104,8 @@ void erasedb(struct sheet * sheet, int _free) {
     int  r, c;
 
     for (c = 0; c < sheet->maxcols; c++) {
-        sheet->fwidth[c] = DEFWIDTH;
-        sheet->precision[c] = DEFPREC;
+        sheet->fwidth[c] = get_conf_int("column_width");
+        sheet->precision[c] = get_conf_int("decimal_precision");
         sheet->realfmt[c] = DEFREFMT;
     }
 
@@ -426,7 +426,7 @@ void write_fd(FILE * f, struct roman * doc) {
         fprintf (f, "nb_frozen_screencols %d\n", sh->nb_frozen_screencols);
 
         for (c = 0; c <= sh->maxcol; c++)
-            if (sh->fwidth[c] != DEFWIDTH || sh->precision[c] != DEFPREC || sh->realfmt[c] != DEFREFMT)
+            if (sh->fwidth[c] != get_conf_int("column_width") || sh->precision[c] != get_conf_int("decimal_precision") || sh->realfmt[c] != DEFREFMT)
                 (void) fprintf (f, "format %s %d %d %d\n", coltoa(c), sh->fwidth[c], sh->precision[c], sh->realfmt[c]);
 
         for (r = 0; r <= sh->maxrow; r++)
@@ -620,17 +620,10 @@ void write_fd(FILE * f, struct roman * doc) {
          * a single buffer that is overwritten on each call, so the first part
          * needs to be written to the file before making the second call.
          */
-
-        if((sh->next == NULL) && strcmp(sh->name,doc->cur_sh->name) != 0){
-            fprintf(f, "movetosheet \"%s\"\n", doc->cur_sh->name);
-            fprintf(f, "goto %s", v_name(doc->cur_sh->currow, doc->cur_sh->curcol));
-        fprintf(f, "\n");
-        } else {
-        //fprintf(f, " %s\n", v_name(strow, stcol));
         fprintf(f, "goto %s", v_name(sh->currow, sh->curcol));
         //fprintf(f, " %s\n", v_name(strow, stcol));
         fprintf(f, "\n");
-        }
+
         sh = sh->next;
     }
     // write marks of document
@@ -1210,7 +1203,7 @@ int import_csv(char * fname, char d) {
     roman->cur_sh->maxrow = r-1;
     roman->cur_sh->maxcol = cf-1;
 
-    auto_fit(roman->cur_sh, 0, roman->cur_sh->maxcols, DEFWIDTH);
+    auto_fit(roman->cur_sh, 0, roman->cur_sh->maxcols, get_conf_int("column_width"));
 
     fclose(f);
 
@@ -1373,7 +1366,7 @@ int import_markdown(char * fname) {
     roman->cur_sh->maxrow = r-1;
     roman->cur_sh->maxcol = cf-1;
 
-    auto_fit(roman->cur_sh, 0, roman->cur_sh->maxcols, DEFWIDTH);
+    auto_fit(roman->cur_sh, 0, roman->cur_sh->maxcols, get_conf_int("column_width"));
 
     fclose(f);
 
@@ -1590,7 +1583,7 @@ void export_markdown(char * fname, int r0, int c0, int rn, int cn) {
                 // Column alignment is bases on cell alignments of first row
                 if (row == 0) {
                     if (col == c0) strcat (dashline, "|");
-                    if (align == 0 || align == -1) {
+                    if (align == 0) {
                         strcat (dashline, ":");
                     } else {
                         strcat (dashline, "-");
