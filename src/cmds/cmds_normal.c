@@ -222,35 +222,40 @@ void do_normalmode(struct block * buf) {
         // CTRL d
         case ctl('d'):                      // set date format using current locate D_FMT format
             {
+            char * f = get_conf_value("default_date_fmt");
+            if(!strcmp(f,"-1")) f=NULL;
+            if(!f){
         #ifdef USELOCALE
-            #include <locale.h>
-            #include <langinfo.h>
-            char * loc = NULL;
-            char * f = NULL;
-            loc = setlocale(LC_TIME, "");
-            if (loc != NULL) {
-                f = nl_langinfo(D_FMT);
-            } else {
-                sc_error("No locale set. Nothing changed");
-            }
-            int p, r = sh->currow, c = sh->curcol, rf = sh->currow, cf = sh->curcol;
-            if ( (p = is_range_selected()) != -1) {
-                struct srange * sr = get_range_by_pos(p);
-                r = sr->tlrow;
-                c = sr->tlcol;
-                rf = sr->brrow;
-                cf = sr->brcol;
-            }
-            if (any_locked_cells(sh, r, c, rf, cf)) {
-                sc_error("Locked cells encountered. Nothing changed");
-                return;
-            }
-            dateformat(sh, lookat(sh, r, c), lookat(sh, rf, cf), f);
-            ui_update(TRUE);
-            break;
+                #include <locale.h>
+                #include <langinfo.h>
+                char * loc = NULL;
+                loc = setlocale(LC_TIME, "");
+                if (loc != NULL) {
+                    f = nl_langinfo(D_FMT);
+                } else {
+                    sc_error("No locale set. Nothing changed");
+                }
         #else
-            sc_info("Build made without USELOCALE enabled");
+                sc_info("Build made without USELOCALE enabled or default_date_fmt set");
         #endif
+            }
+            if(f){
+                int p, r = sh->currow, c = sh->curcol, rf = sh->currow, cf = sh->curcol;
+                if ( (p = is_range_selected()) != -1) {
+                    struct srange * sr = get_range_by_pos(p);
+                    r = sr->tlrow;
+                    c = sr->tlcol;
+                    rf = sr->brrow;
+                    cf = sr->brcol;
+                }
+                if (any_locked_cells(sh, r, c, rf, cf)) {
+                    sc_error("Locked cells encountered. Nothing changed");
+                    return;
+                }
+                dateformat(sh, lookat(sh, r, c), lookat(sh, rf, cf), f);
+                ui_update(TRUE);
+            }
+            break;
             }
 
         // CTRL f

@@ -112,6 +112,7 @@ const char default_config[] =
     "default_open_file_under_cursor_cmd=\n"
 #endif
 
+    "default_date_fmt=-1\n"
     "tm_gmtoff=0\n";
 
 /**
