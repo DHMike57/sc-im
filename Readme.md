@@ -4,13 +4,17 @@
 
 ## An experimental fork with a few added features and bug fixes for testing
 
+- added `hmstosec` and `sectohms` to convert between seconds and hh:mm:ss.dec formats
 - added configuration variable `default_date_fmt` which overrides locale: eg `set default_date_fmt="%d/%m/%Y`
 - added support for encryption via [ccrypt](https://ccrypt.sourceforge.net) (must be installed at make time).
-  - added `:wc` to write encrypted file and config variable `pwd_keep` (retain password in memory for writing)
+  - added `:wc` to write encrypted file
   - detects `.sc.cpt` filename for reading
-- crude fix for calculation/test7 bug.  Needs deeper understanding of problem
+  - config variable `pwd_keep` (retain password in memory for writing)
+  - can read password in environment variable CCRYPT_KEY
+- added scripting SAVE command
+- crude fix for calculation/test7 bug.  (more TODO)
 - mipmip's decimal precision configuration feature
-- cross sheet spurious circular reference fix (crude)
+- cross sheet spurious circular reference fix (crude, more TODO)
 
 
 # NOTE 06/01/2023:

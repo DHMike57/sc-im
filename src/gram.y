@@ -209,6 +209,7 @@ token S_YANKCOL
 %token S_EXECUTE
 %token S_QUIT
 %token S_EXPORT
+%token S_SAVE
 %token S_REBUILD_GRAPH
 %token S_PRINT_GRAPH
 %token S_SYNCREFS
@@ -1185,6 +1186,10 @@ command:
     |    S_QUIT                    {
                                      printf("quitting. unsaved changes will be lost.\n");
                                      shall_quit = 2; // unsaved changes are lost!
+                                   }
+    |    S_SAVE                    {  //requires existing filename.  Mainly for testing
+                                     swprintf(inputline,BUFFERSIZE,L"w!");
+                                     savefile();
                                    }
     |    S_REBUILD_GRAPH           {
                                      rebuild_graph();

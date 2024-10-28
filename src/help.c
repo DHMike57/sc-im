@@ -491,6 +491,9 @@ void show_version_and_quit() {
 #ifdef DEFAULT_OPEN_FILE_UNDER_CURSOR_CMD
     sc_info("-DDEFAULT_OPEN_FILE_UNDER_CURSOR_CMD=\"%s\"", DEFAULT_OPEN_FILE_UNDER_CURSOR_CMD);
 #endif
+#ifdef CRYPT_PATH
+    sc_info("-DCRYPT_PATH=\"%s\"", CRYPT_PATH);
+#endif
 #ifdef USELOCALE
     sc_info("-DUSELOCALE");
 #endif

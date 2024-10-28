@@ -402,7 +402,11 @@ Commands for handling cell content:
                  The format in which it will be save will be according to the current file extension, if any.
      :wc         Save the current spreadsheet encrypted with ".sc.cpt" extension
      :wc {file}  Save the current spreadsheet as {file} encrypted, extension ".sc.cpt"
-                 Both forms require compilation with ccrypt installed.
+                 Both forms require compilation with ccrypt installed. The
+                 password can be taken from the environment variable
+                 CCRYPT_KEY for both reading and writing, or entered
+                 interactively.  The configuration variable 'pdw_keep' if set
+                 retains the write password in memory.
 
      :h          Show this help.
      :help       Show this help.
@@ -2034,6 +2038,9 @@ Commands for handling cell content:
         Export spreadsheet. First parameter is type, second is path to file.
         example of use:
         echo 'export "mkd" "/dev/stdout"' | ./sc-im --nocurses --quiet --quit_afterload foo.csv | text2pdf -L > fighters.pdf
+
+    SAVE
+        Save spreadsheet (must already be named).
 
     RECALC
         Recalculates a formulas in all cells

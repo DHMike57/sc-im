@@ -4,6 +4,9 @@
  * {allegra,ihnp4,uiucdcs,ctvax}!convex!williams
  * $Revision: 7.16 $
  * Modified for sc-im by DHMike57
+ * Security: prompts interactively for password which is written to a unique temp file with
+ * permissions 0600 and is then zeroed and deleted immediately after use. The environment variable
+ * CCRYPT_KEY can also contain the password for convienience or automation, but may be less secure.
  */
 #ifdef CRYPT_PATH
 
@@ -34,7 +37,7 @@ int Crypt=0;
 
 /**
  * \brief Try to open a ccrypt encrypted spreadsheet file.
- *
+ * \details password can be passed in in env var CCRYPT_KEY or requested interactively
  * \param[in] fname file name
  *
  * \return 0 on success; -1 on error
@@ -46,6 +49,7 @@ int creadfile(char *save )
     int fildes;
     int pid;
     char pwfilename[64] = "/tmp/sc_ccrypt-XXXXXX";
+    char option[3] = "-k";
 
     int fd;
 
@@ -58,19 +62,26 @@ int creadfile(char *save )
         sc_error("Can't make pipe to child");
         return -1;
     }
+   const char *env_p = getenv("CCRYPT_KEY");
+   if(strlen(env_p) > 0){
+       pwfilename[0]='\0';
+       strlcpy(pwfilename,"CCRYPT_KEY",strlen("CCRYPT_KEY")+1);
+       option[1]='E';
+       sc_debug("CCRYPT_KEY=%s",env_p);
+   } else {
+        strlcpy(KeyWord,ui_query("Enter key:"),sizeof KeyWord);
 
-    strlcpy(KeyWord,ui_query("Enter key:"),sizeof KeyWord);
-
-    if ((fd = mkstemp (pwfilename)) == -1){
-        sc_error ("mkstemp KeyWord file failed");
-        unlink (pwfilename);
-        return -1;
-    }
-    if(write(fd,KeyWord,strlen(KeyWord)) == -1){
-        sc_error("error writing KeyWord file");
-        unlink (pwfilename);
-        return -1;
-    }
+        if ((fd = mkstemp (pwfilename)) == -1){
+            sc_error ("mkstemp KeyWord file failed");
+            unlink (pwfilename);
+            return -1;
+        }
+        if(write(fd,KeyWord,strlen(KeyWord)) == -1){
+            sc_error("error writing KeyWord file");
+            unlink (pwfilename);
+            return -1;
+        }
+   }
     if ((pid=fork()) == 0) {		/* if child		 */
         (void) close(0);		/* close stdin		 */
         (void) close(1);		/* close stdout		 */
@@ -79,7 +90,7 @@ int creadfile(char *save )
         (void) dup(fildes);		/* standard in from file */
         (void) dup(pipefd[1]);		/* connect to pipe	 */
         (void) fprintf(stderr, " ");
-        (void) execl(CRYPT_PATH, "ccrypt","-q","-c", "-k", pwfilename, (char *) NULL);
+        (void) execl(CRYPT_PATH, "ccrypt","-q","-c", option, pwfilename, (char *) NULL);
         exit(-127);
     } else {				/* else parent */
         (void) close(fildes);
@@ -132,13 +143,15 @@ int creadfile(char *save )
     linelim = -1;
 
     // Zero out the password file before deleting it
-    lseek(fd,0,SEEK_SET);
-    memset(KeyWord, '\0', sizeof(KeyWord));
-    if(write(fd,KeyWord,sizeof KeyWord) == -1)
-        sc_error("error zeroing KeyWord file");
+    if(!env_p||strlen(env_p)==0){
+        lseek(fd,0,SEEK_SET);
+        memset(KeyWord, '\0', sizeof(KeyWord));
+        if(write(fd,KeyWord,sizeof KeyWord) == -1)
+            sc_error("error zeroing KeyWord file");
 
-    close(fd);
-    unlink (pwfilename);
+        close(fd);
+        unlink (pwfilename);
+    }
 
     return return_status;
 }
@@ -146,6 +159,8 @@ int creadfile(char *save )
 /*
  * \brief Write current Doc(roman) to file in encrypted (.sc,cpt) sc-im format
  * \details Write a file encrypted with ccryot. Receives file name.
+ * password can be passed in in env var CCRYPT_KEY or requested interactively
+ * option pwd_keep keeps password in memory for writing
  * \param[in] fname file name
  * \param[in] verbose
  *
@@ -163,6 +178,7 @@ int creadfile(char *save )
       struct roman * doc = session->cur_doc;
       char * curfile = doc->name;
       char pwfilename[64] = "/tmp/sc_ccrypt-XXXXXX";
+      char option[3] = "-k";
 
       fn = fname;
       while (*fn && (*fn == ' '))	/* Skip leading blanks */
@@ -175,6 +191,13 @@ int creadfile(char *save )
           return (-1);
       }
 
+   const char *env_p = getenv("CCRYPT_KEY");
+   if(strlen(env_p) > 0){
+       pwfilename[0]='\0';
+       strlcpy(pwfilename,"CCRYPT_KEY",strlen("CCRYPT_KEY")+1);
+       option[1]='E';
+       sc_debug("CCRYPT_KEY=%s",env_p);
+   } else {
       if (KeyWord[0] == '\0') {
           strlcpy(KeyWord, ui_query("Enter key:"), sizeof KeyWord);
           strlcpy(KeyWordConfirm, ui_query("Confirm key:"), sizeof KeyWord);
@@ -194,6 +217,7 @@ int creadfile(char *save )
           unlink (pwfilename);
           return -1;
       }
+   }
     if ((fildes = open (save, O_TRUNC|O_WRONLY|O_CREAT, 0600)) < 0) {
         sc_error("Can't create file \"%s\"", save);
         return (-1);
@@ -207,7 +231,7 @@ int creadfile(char *save )
           (void) dup(pipefd[0]);			/* connect to pipe input */
           (void) dup(fildes);			/* standard out to file  */
           (void) fprintf(stderr, " ");
-          (void) execl(CRYPT_PATH, "ccrypt", "-k", pwfilename, (char *) NULL);
+          (void) execl(CRYPT_PATH, "ccrypt", option, pwfilename, (char *) NULL);
           exit (-127);
       }
       else {				  /* else parent */
@@ -262,20 +286,22 @@ int creadfile(char *save )
 
       sc_info("File \"%s\" written (encrypted).", curfile);
 
+    if(!env_p||strlen(env_p)==0){  //not using env var
       // Zero out the password file before deleting it
-      lseek(fd,0,SEEK_SET);
-      memset(KeyWord, '\0', sizeof(KeyWord));
-      if(write(fd,KeyWord,sizeof KeyWord) == -1)
-          sc_error("error zeroing KeyWord file");
+          lseek(fd,0,SEEK_SET);
+          memset(KeyWord, '\0', sizeof(KeyWord));
+          if(write(fd,KeyWord,sizeof KeyWord) == -1)
+              sc_error("error zeroing KeyWord file");
 
-      (void) close(fd);
-      unlink (pwfilename);
+          (void) close(fd);
+          unlink (pwfilename);
 
-      if (get_conf_int("pwd_keep")==1)
-         strlcpy(KeyWord,KeyWordConfirm,sizeof KeyWord);
-      else
-          memset(KeyWordConfirm, '\0', sizeof(KeyWordConfirm));
+          if (get_conf_int("pwd_keep")==1)
+             strlcpy(KeyWord,KeyWordConfirm,sizeof KeyWord);
+          else
+              memset(KeyWordConfirm, '\0', sizeof(KeyWordConfirm));
 
+    }
       session->cur_doc->modflg = 0;
       return return_status;
   }
