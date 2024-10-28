@@ -81,6 +81,10 @@
 #include "trigger.h"
 #include "sheet.h"
 #include "vmtbl.h"
+#ifdef CRYPT_PATH
+#include "crypt.h"
+extern  int Crypt;
+#endif
 
 
 #ifdef HAVE_PTHREAD
@@ -239,7 +243,12 @@ int savefile() {
     if (inputline[1] == L'!') force_rewrite = 1;
 
     wcstombs(name, inputline, BUFFERSIZE);
-    del_range_chars(name, 0, 1 + force_rewrite);
+#ifdef CRYPT_PATH
+    if(Crypt==1)
+        del_range_chars(name, 0, 2 + force_rewrite);
+    else
+#endif
+        del_range_chars(name, 0, 1 + force_rewrite);
 
 #ifndef NO_WORDEXP
     wordexp(name, &p, 0);
@@ -286,8 +295,21 @@ int savefile() {
 
     // add sc extension if not present
     if (wcslen(inputline) > 2 && str_in_str(curfile, ".") == -1) {
-        sprintf(curfile + strlen(curfile), ".sc");
+#ifdef CRYPT_PATH
+        if(Crypt==1)
+            sprintf(curfile + strlen(curfile), ".sc.cpt");
+        else
+#endif
+            sprintf(curfile + strlen(curfile), ".sc");
 
+#ifdef CRYPT_PATH
+    } else if ((Crypt == 1) &&
+        (strlen(curfile) > 3) && (! strcasecmp( & curfile[strlen(curfile)-3], ".sc"))) {
+        sprintf(curfile + strlen(curfile), ".cpt");
+
+    } else if (strlen(curfile) > 7 && (! strcasecmp( & curfile[strlen(curfile)-7], ".sc.cpt"))) {
+        Crypt=1;
+#endif
     // treat csv
     } else if (strlen(curfile) > 4 && (! strcasecmp( & curfile[strlen(curfile)-4], ".csv"))) {
         export_delim(curfile, get_delim("csv"), 0, 0, doc->cur_sh->maxrow, doc->cur_sh->maxcol, 1);
@@ -329,10 +351,20 @@ int savefile() {
     }
 
     // save in sc format
-    if (writefile(curfile, 1) < 0) {
-        sc_error("File could not be saved");
-        return -1;
+#ifdef CRYPT_PATH
+    if(Crypt==1){  // Crypt=1 suppresses echo in key input
+        if (cwritefile(curfile, 1) == 0) {
+            Crypt=0;
+            return -1;
+        }
+        Crypt=0;
     }
+     else
+#endif
+         if (writefile(curfile, 1) < 0) {
+            sc_error("File could not be saved");
+            return -1;
+         }
     doc->modflg = 0;
     return 0;
 }
@@ -802,7 +834,16 @@ sc_readfile_result readfile(char * fname, int eraseflg) {
     if (! strcmp( & fname[len-3], ".sc") ||
         (len >= strlen(CONFIG_FILE) && ! strcasecmp( & fname[len-strlen(CONFIG_FILE)], CONFIG_FILE))) {
         // pass
-
+    } else if (! strcmp( & fname[len-7], ".sc.cpt") ||
+        (len >= strlen(CONFIG_FILE) && ! strcasecmp( & fname[len-strlen(CONFIG_FILE)], CONFIG_FILE))) {
+#ifdef CRYPT_PATH
+        Crypt=1;
+#else
+        sc_error("ccrypt support not compiled in");
+        roman->loading=0;
+        return SC_READFILE_ERROR;
+        //pass
+#endif
     // If file is an xlsx file, we import it
     } else if (len > 5 && ! strcasecmp( & fname[len-5], ".xlsx")){
         #ifndef XLSX
@@ -895,12 +936,30 @@ sc_readfile_result readfile(char * fname, int eraseflg) {
     }
 
     if (eraseflg) erasedb(roman->cur_sh, 0); //TODO handle file
-
-    while (! brokenpipe && fgets(line, sizeof(line), f)) {
-        linelim = 0;
-        if (line[0] != '#') (void) yyparse();
+#ifdef CRYPT_PATH
+    if(Crypt==1){ // Crypt=1 suppresses echo in key input
+        fclose(f);
+        if(creadfile(save) < 0){
+            roman->loading = 0;
+            Crypt=0;
+            if(roman->name != NULL){
+                free(roman->name);
+                roman->name=NULL;
+            }
+            // returning error gives misleading message
+            return SC_READFILE_SUCCESS;
+        }
+        Crypt=0;
+    } else {
+#else
+        if(1){
+#endif
+        while (! brokenpipe && fgets(line, sizeof(line), f)) {
+            linelim = 0;
+            if (line[0] != '#') (void) yyparse();
+        }
+        fclose(f);
     }
-    fclose(f);
 
     roman->loading = 0;
     linelim = -1;

@@ -109,6 +109,9 @@ const char default_config[] =
 #else
     "default_open_file_under_cursor_cmd=\n"
 #endif
+#ifdef CRYPT_PATH
+    "pwd_keep=0\n"
+#endif
 
     "tm_gmtoff=0\n";
 

@@ -105,6 +105,9 @@ extern int cmd_pending;
 extern int cmd_multiplier;
 extern char insert_edit_submode;
 extern struct session * session;
+#ifdef CRYPT_PATH
+extern int Crypt;
+#endif
 
 WINDOW * main_win;
 WINDOW * input_win;
@@ -384,7 +387,7 @@ void ui_do_welcome() {
 /**
  * \brief Refreshes screen grid
  *
- * \details This function is used to refresh the screen content. If 
+ * \details This function is used to refresh the screen content. If
  * the header flag is set, the first column of the screen gets
  * refreshed.
  *
@@ -1467,7 +1470,10 @@ char * ui_query(char * initial_msg) {
 
         mvwprintw(input_pad, 0, 0, "%s", hline);
         wclrtoeol(input_pad);
-        ui_refresh_pad(0);
+#ifdef CRYPT_PATH
+        if(Crypt==0)
+#endif
+            ui_refresh_pad(0);
         d = wgetch(input_pad);
     }
     if (d == OKEY_ESC) hline[0]='\0';
