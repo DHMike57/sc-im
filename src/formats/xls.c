@@ -53,6 +53,7 @@
 #include "../color.h"
 #include "../macros.h"
 #include "../utils/string.h"
+#include "../conf.h"
 
 /*
  * xls.h is part of libxls. make sure its installed and headers are in path.
