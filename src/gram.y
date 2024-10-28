@@ -31,6 +31,9 @@
 #include "sheet.h"
 #include "vmtbl.h"
 #include "cmds/cmds_command.h"
+#ifdef CRYPT_PATH
+#include "crypt.h"
+#endif
 
 void yyerror(char *err);               // error routine for yacc (gram.y)
 int yylex();
@@ -303,6 +306,7 @@ token S_YANKCOL
 %token K_TM_GMTOFF
 %token K_COLUMN_WIDTH
 %token K_DECIMAL_PRECISION
+%token K_PWD_KEEP
 %token K_COMMAND_TIMEOUT
 %token K_MAPPING_TIMEOUT
 %token K_NEWLINE_ACTION
@@ -1792,5 +1796,20 @@ setitem :
                                      else         parse_str(user_conf_d, "show_cursor=1", TRUE); }
     |    K_SHOW_CURSOR            {               parse_str(user_conf_d, "show_cursor=1", TRUE); }
     |    K_NOSHOW_CURSOR          {               parse_str(user_conf_d, "show_cursor=0", TRUE); }
+    |    K_PWD_KEEP               {
+#ifdef CRYPT_PATH
+                                                   parse_str(user_conf_d, "pwd_keep=0",TRUE);
+                                                   clear_keyword();
+#endif
+                                                   }
+    |    K_PWD_KEEP '=' NUMBER    {
+#ifdef CRYPT_PATH
+
+                                    if ($3 == 0) { parse_str(user_conf_d, "pwd_keep=0",TRUE);
+                                                  clear_keyword();}
+                                    else          parse_str(user_conf_d, "pwd_keep=1",TRUE);
+
+#endif
+                                                   }
 
     ;

@@ -400,6 +400,9 @@ Commands for handling cell content:
      :w! {file}  Save the current spreadsheet as {file}, forcing an overwrite
                  if {file} already exists.
                  The format in which it will be save will be according to the current file extension, if any.
+     :wc         Save the current spreadsheet encrypted with ".sc.cpt" extension
+     :wc {file}  Save the current spreadsheet as {file} encrypted, extension ".sc.cpt"
+                 Both forms require compilation with ccrypt installed.
 
      :h          Show this help.
      :help       Show this help.
@@ -1463,6 +1466,11 @@ Commands for handling cell content:
     to another format.
     this will also be used in case you also want to copy/paste a range that have hidden rows in
     it (for instance, the result of an applied filter).
+
+    'pwd_keep' [default off]
+    set this to keep the encryption password for writing in memory.
+    password is reset and not kept on loading an encrypted file.
+    requires ccrypt utility and compilation with CRYPT_PATH set.
 
 ==============================================================================
 &Built-in Range Functions&

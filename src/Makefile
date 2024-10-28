@@ -78,6 +78,11 @@ CFLAGS += -DAUTOBACKUP
 # Have threads? Set these two, if you want the autobackup feature to work with threads.
 CFLAGS += -DHAVE_PTHREAD
 
+# Check for ccrypt existence
+ifneq (, $(shell which ccrypt))
+  CFLAGS += -DCRYPT_PATH=\"$(shell which ccrypt)\"
+endif
+
 ifneq ($(shell uname -s),Darwin)
   LDLIBS += -pthread
 endif
@@ -226,4 +231,4 @@ clean:
 	rm -f experres.h statres.h y.tab.h
 	rm -f core gram.c y.output pxmalloc.c pvmtbl.c tags $(name)qref
 	rm -f qhelp.c $(name)
-	rm -rf ../docs/ 
+	rm -rf ../docs/

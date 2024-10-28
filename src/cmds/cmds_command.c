@@ -80,6 +80,9 @@
 extern char * rev;
 extern struct dictionary * user_conf_d;
 extern struct session * session;
+#ifdef CRYPT_PATH
+extern int Crypt;
+#endif
 
 wchar_t inputline[BUFFERSIZE];
 extern wchar_t interp_line[BUFFERSIZE];
@@ -182,6 +185,9 @@ L"vmap",
 L"vnoremap",
 L"vunmap",
 L"w",
+#ifdef CRYPT_PATH
+L"wc",
+#endif
 L"wq",
 L"x",
 (wchar_t *) 0
@@ -1006,7 +1012,14 @@ void do_commandmode(struct block * sb) {
         } else if ( ! wcscmp(inputline, L"wq") ) {
           wcscpy(inputline, L"x");
           if (savefile() == 0) shall_quit = 1;
+        } else if ( ! wcsncmp(inputline, L"wc",2) ) {
+#ifdef CRYPT_PATH
+          Crypt=1;
+          savefile();
+#else
+          sc_error("ccrypt support not compiled in");
 
+#endif
         } else if ( inputline[0] == L'w' ) {
           savefile();
 
