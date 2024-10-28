@@ -2,6 +2,16 @@
   <img src="https://raw.githubusercontent.com/andmarti1424/sc-im/dev/logo.png" alt="sc-im" height="25%" width="25%">
 </h1>
 
+## An experimental fork with a few added features and bug fixes for testing
+
+- added configuration variable `default_date_fmt` which overrides locale: eg `set default_date_fmt="%d/%m/%Y`
+- added support for encryption via [ccrypt](https://ccrypt.sourceforge.net) (must be installed at make time).
+  - added `:wc` to write encrypted file and config variable `pwd_keep` (retain password in memory for writing)
+  - detects `.sc.cpt` filename for reading
+- crude fix for calculation/test7 bug.  Needs deeper understanding of problem
+- mipmip's decimal precision configuration feature
+- cross sheet spurious circular reference fix (crude)
+
 
 # NOTE 06/01/2023:
 This project needs some help.
