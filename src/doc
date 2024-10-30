@@ -923,7 +923,7 @@ Commands for handling cell content:
                 The different types and its details:
                         - HEADINGS Topmost (header) row that lists column names
                           (only for even columns), and leftmost (header) column
-                          that lists row numbers.                          
+                          that lists row numbers.
                         - HEADINGS_ODD The same that above but shown for odd columns.
                         - MODE The text in the top right that indicates which
                           mode sc-im is currently in.
@@ -1832,6 +1832,12 @@ Commands for handling cell content:
            midnight, the night before. The hour should range from 0 to 23;
            the minutes and seconds should range from 0 to 59.
 
+       @hmstosec({expr})
+           Convert a time in HH:MM:SS.dec format to seconds,  Returns -1 on
+           error
+
+       @sectohms({expr})
+           Convert seconds to HH:MM:SS.dec format.
 
 ==============================================================================
 &Other functions&

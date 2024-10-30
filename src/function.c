@@ -1163,3 +1163,115 @@ double rint(double d) {
         fr<0.5 || fr==0.5 && fl==floor(fl/2)*2 ? fl : ceil(d);
 }
 #endif
+
+
+
+
+/**
+ * \brief dohmstosec()
+ *
+ * \details Convert time in hh:mm:ss.dec format to seconds
+ *
+ * \param[in] s
+ * \return double
+ */
+double dohmstosec(char * s){
+    if (!s) return 0;
+    int mult=1;
+    double secs=0;
+    int len=strlen(s);
+    char *timestr=scxmalloc(len+1);
+    char * eptr;
+    double err = (double) -1;
+
+
+    strlcpy(timestr,s,len+1);
+
+
+    for(int  p=len;p>=0;p--){
+        if (p==0){
+           if(strlen(timestr)>2 && mult < (60 * 60)){  // allow hours in hundreds
+               secs=err;
+               break;
+           }
+           secs+=strtod(timestr+p, &eptr) * mult;
+           continue;
+        }
+        if(timestr[p]== '.' || timestr[p]==','){
+            if(mult > 1){  // decimal point allowed in second only
+                secs=err;
+                break;
+            }
+           if(timestr[p]==',')
+               timestr[p]='.';
+           secs=strtod(timestr+p,&eptr);
+           timestr[p]='\0';
+            continue;
+        }
+        if(isdigit(timestr[p]))
+                continue;
+        else if (timestr[p] == ':'){
+           if(strlen(timestr+p+1)>2){
+               secs=err;
+               break;
+           }
+           secs+=strtod(timestr+p+1,&eptr) * mult ;
+           mult*=60;
+           if(mult>60*60) {// too many fields
+                secs=err;
+                break;
+           }
+           timestr[p]='\0';
+           continue;
+        }
+    }
+    scxfree(timestr);
+    scxfree(s);
+    if(secs==err)
+        sc_error("hmstosec: input error");
+    return secs;
+}
+
+
+/**
+ * \brief dosectohms()
+ *
+ * \details Convert seconds to time in hh:mm:ss.dec
+ *
+ * \param[in] double n
+ * \return char *
+ */
+char * dosectohms(double n){
+
+    double whole;
+    double fractional = modf(n, &whole);
+    int hours;
+    int mins;
+    int secs;
+    char buf[BUFFERSIZE]={""};
+    char decbuf[BUFFERSIZE]={""};
+    char * ret;
+    char * p;
+
+    hours= (int)whole/3600;
+    mins = ((int)whole/60)%60;
+    secs = (int)whole%60;
+
+    // handle the decimal as a separate string
+    // cannot have a reliable two digit format otherwise
+    sprintf(decbuf,"%.4g",fractional);
+    p=decbuf+1;  // it's all about the leading 0!
+
+    if(hours > 0)
+        sprintf(buf,"%02d:%02d:%02d",hours,mins,secs);
+    else
+        sprintf(buf,"%02d:%02d",mins,secs);
+
+    ret = scxmalloc(strlen(buf)+strlen(p)+1);
+    ret[0] = '\0';   // ensures the memory is an empty string
+    strcat(ret,buf);
+    strcat(ret,p);
+    return (ret);
+}
+
+
