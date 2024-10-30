@@ -363,6 +363,8 @@ token S_YANKCOL
 %token K_DTS
 %token K_TTS
 %token K_FMT
+%token K_HMSTOSEC
+%token K_SECTOHMS
 %token K_REPLACE
 %token K_SUBSTR
 %token K_UPPER
@@ -1409,6 +1411,8 @@ term:   var                       {
                                   { $$ = new(DATE, $4, $6); }
         | '@' K_FMT  '(' e ',' e ')'
                                   { $$ = new(FMT, $4, $6); }
+        | '@' K_HMSTOSEC '(' e ')'{ $$ = new(HMSTOSEC, $4, ENULL); }
+        | '@' K_SECTOHMS '(' e ')'{ $$ = new(SECTOHMS, $4, ENULL); }
         | '@' K_UPPER '(' e ')'   { $$ = new(UPPER, $4, ENULL); }
         | '@' K_LOWER '(' e ')'   { $$ = new(LOWER, $4, ENULL); }
         | '@' K_CAPITAL '(' e ')' { $$ = new(CAPITAL, $4, ENULL); }

@@ -450,6 +450,11 @@ double eval(struct sheet * sh, struct ent * ent, struct enode * e, int rebuild_g
     case MONTH:  return (dotime(MONTH, eval(sh, ent, e->e.o.left, rebuild_graph)));
     case DAY:    return (dotime(DAY, eval(sh, ent, e->e.o.left, rebuild_graph)));
     case YEAR:   return (dotime(YEAR, eval(sh, ent, e->e.o.left, rebuild_graph)));
+    case HMSTOSEC:
+                 if (rebuild_graph && getVertex(graph, sh, ent, 0) == NULL) GraphAddVertex(graph, sh, ent);
+                 return (dohmstosec(seval(sh, ent, e->e.o.left, rebuild_graph)));
+                 //return (doston(seval(sh, ent, e->e.o.left, rebuild_graph)));
+
 
     case NOW:
                  if (rebuild_graph && getVertex(graph, sh, ent, 0) == NULL) GraphAddVertex(graph, sh, ent);
@@ -639,6 +644,11 @@ char * seval(struct sheet * sh, struct ent * ent, struct enode * se, int rebuild
     case LOWER:  return (docase(LOWER, seval(sh, ent, se->e.o.left, rebuild_graph)));
 
     case SET8BIT:  return (docase(SET8BIT, seval(sh, ent, se->e.o.left, rebuild_graph)));
+
+    case SECTOHMS:
+                 if (ent && getVertex(graph, sh, ent, 0) == NULL) GraphAddVertex(graph, sh, ent);
+                 return (dosectohms(eval(sh, ent, se->e.o.left, rebuild_graph)));
+
 
     case CAPITAL:
                  if (rebuild_graph && getVertex(graph, sh, ent, 0) == NULL) GraphAddVertex(graph, sh, ent);
@@ -1996,6 +2006,8 @@ void decompile(struct enode *e, int priority) {
     case STON:  one_arg("@ston(", e); break;
     case ASCII: one_arg("@ascii(", e); break;
     case SLEN:  one_arg("@slen(", e); break;
+    case HMSTOSEC:  one_arg("@hmstosec(", e); break;
+    case SECTOHMS:  one_arg("@sectohms(", e); break;
     case EQS:   two_arg("@eqs(", e); break;
     case LMAX:  list_arg("@max(", e); break;
     case LMIN:  list_arg("@min(", e); break;

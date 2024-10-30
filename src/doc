@@ -1849,6 +1849,12 @@ Commands for handling cell content:
            midnight, the night before. The hour should range from 0 to 23;
            the minutes and seconds should range from 0 to 59.
 
+       @hmstosec({expr})
+           Convert a time in HH:MM:SS.dec format to seconds,  Returns -1 on
+           error
+
+       @sectohms({expr})
+           Convert seconds to HH:MM:SS.dec format.
 
 ==============================================================================
 &Other functions&
