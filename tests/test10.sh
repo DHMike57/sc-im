@@ -28,6 +28,7 @@ label C2 = @sectohms(B2)\n
 label C3 = @sectohms(B3)\n
 label C4 = @sectohms(B4)\n
 label C5 = @sectohms(B5)\n
+label C6 = @sumtime(a0:a5)\n
 recalc\n
 GETNUM B0\n
 GETNUM B1\n
@@ -40,6 +41,7 @@ GETSTRING C2\n
 GETSTRING C3\n
 GETSTRING C4\n
 GETSTRING C5\n
+GETSTRING C6\n
 '
 EXP="
 10\n\
@@ -52,7 +54,8 @@ EXP="
 01:00\n\
 01:00.1\n\
 01:01:01\n\
-00:00
+00:00\n\
+01:03:21.2
 "
 assert "echo -e '${CMD}' | $VALGRIND_CMD ../src/sc-im ${NAME}.sc --nocurses --nodebug --quit_afterload 2>&1 |grep -v '^$\|Interp\|Change\|wider'" $EXP
 #we check valgrind log
@@ -65,7 +68,7 @@ assert_iffound_notcond ${NAME}_vallog "Invalid read of size"
 assert_iffound_notcond ${NAME}_vallog "Invalid write of size"
 assert_iffound_notcond ${NAME}_vallog "Invalid free() / delete"
 if [ "$1" != "keep-vallog" ];then
-    rm ${NAME}_vallog
+   echo rm ${NAME}_vallog
 fi
 
 assert_end ${NAME}

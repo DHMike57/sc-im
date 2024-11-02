@@ -1475,6 +1475,13 @@ Commands for handling cell content:
             @sum(D1:D20,@eqs(C1,"s"))
             @sum(D1:D20,@eqs(@fixed(C1),"s"))
 
+    @sumtime({range})
+    @sumtime({range},{expr})
+        Works like @sum, except that:
+          operates on HH:MM:SS.dec strings
+          returns a string in above format
+          enter as \"@sumtime...
+
     @prod({range})
     @prod({range},{expr})
         Multiply the values together.

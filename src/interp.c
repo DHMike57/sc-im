@@ -648,8 +648,33 @@ char * seval(struct sheet * sh, struct ent * ent, struct enode * se, int rebuild
     case SECTOHMS:
                  if (ent && getVertex(graph, sh, ent, 0) == NULL) GraphAddVertex(graph, sh, ent);
                  return (dosectohms(eval(sh, ent, se->e.o.left, rebuild_graph)));
+    case SUMTIME:
+                 {
+        int r, c, row, col;
+        int maxr, maxc;
+        int minr, minc;
+        maxr = se->e.o.left->e.r.right.vp->row;
+        maxc = se->e.o.left->e.r.right.vp->col;
+        minr = se->e.o.left->e.r.left.vp->row;
+        minc = se->e.o.left->e.r.left.vp->col;
+        if (minr>maxr) r = maxr, maxr = minr, minr = r;
+        if (minc>maxc) c = maxc, maxc = minc, minc = c;
 
+        for (row=minr; ent != NULL && row <= maxr; row++) {
+            for (col=minc; col <= maxc; col++) {
+                if (ent->row == row && ent->col == col) {
+                    sc_error("Circular reference in eval (cell %s%d)", coltoa(col), row);
+                    se->op = ERR_;
+                    cellerror = CELLERROR;
+                    return (char *) NULL;
+                }
+                GraphAddEdge(getVertex(graph, sh, lookat(sh, ent->row, ent->col), 1), getVertex(graph, sh, lookat(sh, row, col), 1));
+            }
+        }
 
+                return dosumtime(sh, minr, minc, maxr, maxc, se->e.o.right);
+
+                 }
     case CAPITAL:
                  if (rebuild_graph && getVertex(graph, sh, ent, 0) == NULL) GraphAddVertex(graph, sh, ent);
                  return (docapital(seval(sh, ent, se->e.o.left, rebuild_graph)));
@@ -1948,6 +1973,7 @@ void decompile(struct enode *e, int priority) {
             break;
 
     case SUM    : index_arg("@sum", e); break;
+    case SUMTIME    : index_arg("@sumtime", e); break;
     case PROD   : index_arg("@prod", e); break;
     case AVG    : index_arg("@avg", e); break;
     case COUNT  : index_arg("@count", e); break;

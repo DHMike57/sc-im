@@ -83,6 +83,7 @@ char * doreplace(char * source, char * old, char * new_);
 char * dochr(double ascii);
 double dohmstosec(char * s);
 char * dosectohms(double n);
+char * dosumtime(struct sheet * sh, int minr, int minc, int maxr, int maxc, struct enode * e);
 
 #define dtr(x) ((x)*(M_PI/(double)180.0))
 #define rtd(x) ((x)*(180.0/(double)M_PI))
