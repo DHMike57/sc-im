@@ -396,6 +396,7 @@ struct go_save {
 #define SEVALUATE   (OP_BASE + 88)
 #define HMSTOSEC    (OP_BASE + 89)
 #define SECTOHMS    (OP_BASE + 90)
+#define SUMTIME    (OP_BASE + 91)
 
 /* flag values */
 #define is_valid      0001

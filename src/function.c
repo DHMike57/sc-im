@@ -1182,7 +1182,7 @@ double dohmstosec(char * s){
     int len=strlen(s);
     char *timestr=scxmalloc(len+1);
     char * eptr;
-    double err = (double) -1;
+    int err =  0;
 
 
     strlcpy(timestr,s,len+1);
@@ -1191,7 +1191,7 @@ double dohmstosec(char * s){
     for(int  p=len;p>=0;p--){
         if (p==0){
            if(strlen(timestr)>2 && mult < (60 * 60)){  // allow hours in hundreds
-               secs=err;
+               err=1;  // may not be an intended timestr
                break;
            }
            secs+=strtod(timestr+p, &eptr) * mult;
@@ -1199,7 +1199,7 @@ double dohmstosec(char * s){
         }
         if(timestr[p]== '.' || timestr[p]==','){
             if(mult > 1){  // decimal point allowed in second only
-                secs=err;
+                err=2;
                 break;
             }
            if(timestr[p]==',')
@@ -1212,13 +1212,13 @@ double dohmstosec(char * s){
                 continue;
         else if (timestr[p] == ':'){
            if(strlen(timestr+p+1)>2){
-               secs=err;
+               err=2;
                break;
            }
            secs+=strtod(timestr+p+1,&eptr) * mult ;
            mult*=60;
            if(mult>60*60) {// too many fields
-                secs=err;
+                err=2;
                 break;
            }
            timestr[p]='\0';
@@ -1226,9 +1226,11 @@ double dohmstosec(char * s){
         }
     }
     scxfree(timestr);
-    scxfree(s);
-    if(secs==err)
-        sc_error("hmstosec: input error");
+    if(err>0){
+        secs=(double)0;
+        if(err==2)
+            sc_error("hmstosec: input error");
+    }
     return secs;
 }
 
@@ -1274,4 +1276,46 @@ char * dosectohms(double n){
     return (ret);
 }
 
+
+/**
+ * \brief dosumtime()
+ *
+ * \details Convience function to sum a range of times in hh:mm:ss.dec format
+ * \param[in] minr
+ * \param[in] minc
+ * \param[in] maxr
+ * \param[in] maxc
+ * \param[in] e
+ * \return char *
+ */
+char * dosumtime(struct sheet * sh, int minr, int minc, int maxr, int maxc, struct enode * se) {
+    double v;
+    int r, c;
+    int cellerr = CELLOK;
+    struct ent * p;
+    char  ret[BUFFERSIZE];
+
+    v = (double)0;
+    for (r = minr; r <= maxr; r++)
+        for (c = minc; c <= maxc; c++) {
+            if (se) {
+                rowoffset = r - minr;
+                coloffset = c - minc;
+            }
+            if ( !se || seval(sh, NULL, se, 0))
+                if ((p = *ATBL(sh, sh->tbl, r, c)) && p->flags ) {
+                    if (p->cellerror)
+                        cellerr = CELLINVALID;
+                    v += dohmstosec(p->label);
+                }
+        }
+    cellerror = cellerr;
+    rowoffset = coloffset = 0;
+    //  need to mess about with intermediate bufffer so that we can free buf
+    char * buf=dosectohms(v);
+    strcpy(ret,buf);
+    if(buf != NULL)
+        scxfree(buf);
+    return (strcpy(scxmalloc( (size_t) (strlen(ret) + 1)), ret));
+}
 

@@ -366,6 +366,7 @@ token S_YANKCOL
 %token K_FMT
 %token K_HMSTOSEC
 %token K_SECTOHMS
+%token K_SUMTIME
 %token K_REPLACE
 %token K_SUBSTR
 %token K_UPPER
@@ -1418,6 +1419,10 @@ term:   var                       {
                                   { $$ = new(FMT, $4, $6); }
         | '@' K_HMSTOSEC '(' e ')'{ $$ = new(HMSTOSEC, $4, ENULL); }
         | '@' K_SECTOHMS '(' e ')'{ $$ = new(SECTOHMS, $4, ENULL); }
+        | '@' K_SUMTIME '(' var_or_range ')'
+                                  { $$ = new(SUMTIME, new_range(REDUCE | SUMTIME, $4), ENULL); }
+        | '@' K_SUMTIME  '(' range ',' e ')'
+                                  { $$ = new(SUMTIME, new_range(REDUCE | SUMTIME, $4), $6); }
         | '@' K_UPPER '(' e ')'   { $$ = new(UPPER, $4, ENULL); }
         | '@' K_LOWER '(' e ')'   { $$ = new(LOWER, $4, ENULL); }
         | '@' K_CAPITAL '(' e ')' { $$ = new(CAPITAL, $4, ENULL); }

@@ -4,7 +4,7 @@
 
 ## An experimental fork with a few added features and bug fixes for testing
 
-- added `hmstosec` and `sectohms` to convert between seconds and hh:mm:ss.dec formats
+- added `hmstosec`, `sectohms` and `sumtime` to convert between seconds and hh:mm:ss.dec formats
 - added configuration variable `default_date_fmt` which overrides locale: eg `set default_date_fmt="%d/%m/%Y`
 - added support for encryption via [ccrypt](https://ccrypt.sourceforge.net) (must be installed at make time).
   - added `:wc` to write encrypted file
