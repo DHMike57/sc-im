@@ -421,6 +421,7 @@ token K_COLORERR
 %token K_ASCII
 %token K_CHR
 %token K_FACT
+%token K_FIND
 
 
 %right ';'
@@ -1401,7 +1402,7 @@ term:   var                       {
         | '@' K_RAND '(' e ',' e ')'
                                   { $$ = new(RAND, $4, $6); }
         | '@' K_RAND
-                                  { $$ = new(RAND, NULL, NULL ); }
+                                  { $$ = new(RAND, ENULL, ENULL ); }
         | '@' K_DATE '(' e ')'    { $$ = new(DATE, $4, ENULL); }
         | '@' K_DATE '(' e ',' e ')'
                                   { $$ = new(DATE, $4, $6); }
@@ -1457,6 +1458,10 @@ term:   var                       {
         | '@' K_SEVALUATE '(' e ')' { $$ = new(SEVALUATE, $4, ENULL); }
         | '@' K_SUBSTR '(' e ',' e ',' e ')'
                                   { $$ = new(SUBSTR, $4, new(',', $6, $8)); }
+        | '@' K_FIND '(' e ',' e ')'
+                                  { $$ = new(FIND, $4, $6 ); }
+        | '@' K_FIND '(' e ',' e ',' e ')'
+                                  { $$ = new(FIND, $4, new(',', $6 , $8 )); }
         |       '(' e ')'         { $$ = $2; }
         |       '+' term          { $$ = $2; }
     //    |       '-' term          { $$ = new('m', $2, ENULL); }

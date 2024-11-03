@@ -1609,6 +1609,12 @@ Commands for handling cell content:
     @slen("{se}")
         Returns the length of string expression {se}.
 
+    @find("{se}","{se}")
+        Returns the position of {se1} in {se2} or 0 if not found
+    @find("{se}","{se}",{expr})
+        Returns the {expr}th position of {se1} in {se2} or 0 if not found,
+        counting from the end if {expr} is negative. {expr} should not be 0
+
     @evaluate("{se}")
         Evaluate a string expression as a numeric formula. Example of use:
         If you have in cell D0 a formula as text, "@sum(A0:A11)", instead of a proper

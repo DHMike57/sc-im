@@ -1237,7 +1237,7 @@ void getseed(ranctx * x)
     const char *env_p = getenv("SCIM_RAND_SEED");
     errno=0;
     char * endptr;
-    if(env_p == NULL || strlen(env_p)>0){
+    if(env_p != NULL && strlen(env_p)>0){
         u8 val = strtol(env_p, &endptr, 10);
         if(errno==0 && (env_p!=endptr) && (*endptr=='\0')){ // got a number from env
             x->seed=val;
@@ -1260,4 +1260,61 @@ void getseed(ranctx * x)
     }
     raninit(x);
     return;
+}
+
+void str_rev (char *st)  ;
+
+/**
+ * \brief dofind()
+ * \details Returns the instance^th occurrence of label in s
+ * counting from the end if instance is negative/
+ * \param[in] char *
+ * \param[in] char *
+ * \param[in] int
+ * \return double
+ */
+double dofind(char * label,char *s, int instance){
+    char * res;
+    double ret=0;
+    int index=instance;
+    if(instance==0)index=1;
+    char buf[BUFFERSIZE];
+    strlcpy(buf,s,sizeof(buf));
+    if(instance<0){
+        str_rev(buf);
+        index*= -1;
+    }
+    char *p=buf;
+    for (int i = 0;i < index;i++){
+        if ((res = strstr(p,label)) != NULL){
+                ret+=(double) ((res - p  +1 ));
+                p=res+1;
+        } else
+            ret = (double)0;
+    }
+    if(instance < 0 && ret > 0)
+        ret=strlen(s)-ret+1;
+    scxfree(label);
+    scxfree(s);
+    return ret;
+}
+
+
+void str_rev (char *st) {
+    int len, i;
+    char *start, *end, temp;
+
+    len = strlen (st);
+    start = st;
+    end = st;
+
+    for (i = 0; i < len - 1; i++)
+    end++;
+    for (i = 0; i < len/2; i++)  {
+        temp = *end;
+        *end = *start;
+        *start = temp;
+        start++;
+        end--;
+    }
 }

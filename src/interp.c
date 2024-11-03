@@ -469,6 +469,15 @@ double eval(struct sheet * sh, struct ent * ent, struct enode * e, int rebuild_g
     case STON:
                  if (ent && getVertex(graph, sh, ent, 0) == NULL) GraphAddVertex(graph, sh, ent);
                  return (doston(seval(sh, ent, e->e.o.left, rebuild_graph)));
+    case FIND:
+                 if (ent && getVertex(graph, sh, ent, 0) == NULL) GraphAddVertex(graph, sh, ent);
+                 if(e->e.o.right->e.o.right != NULL)
+                     return (dofind(seval(sh, ent, e->e.o.left, rebuild_graph),
+                                    seval(sh, ent, e->e.o.right->e.o.left, rebuild_graph),
+                                    eval(sh, ent, e->e.o.right->e.o.right, rebuild_graph)));
+                 else
+                     return (dofind(seval(sh, ent, e->e.o.left, rebuild_graph),
+                                    seval(sh, ent, e->e.o.right, rebuild_graph),1));
 
     case ASCII:  return (doascii(seval(sh, ent, e->e.o.left, rebuild_graph)));
 
@@ -1999,6 +2008,11 @@ void decompile(struct enode *e, int priority) {
     case DTS:   three_arg("@dts(", e); break;
     case TTS:   three_arg("@tts(", e); break;
     case STON:  one_arg("@ston(", e); break;
+    case FIND:
+                if(e->e.o.right->e.o.left){
+                    three_arg("@find(", e); break;
+                }else{
+                    two_arg("@find(", e); break;}
     case ASCII: one_arg("@ascii(", e); break;
     case SLEN:  one_arg("@slen(", e); break;
     case EQS:   two_arg("@eqs(", e); break;
