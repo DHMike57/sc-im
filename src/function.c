@@ -1163,3 +1163,101 @@ double rint(double d) {
         fr<0.5 || fr==0.5 && fl==floor(fl/2)*2 ? fl : ceil(d);
 }
 #endif
+
+
+typedef uint64_t u8;
+typedef uint16_t u2;
+typedef struct ranct { u8 a; u8 b; u8 c; u8 d; u8 seed; u2 start; } ranctx;
+
+#define rot64(x,k) (((x)<<(k))|((x)>>(64-(k))))
+
+u8 ranval( ranctx *x );
+void raninit( ranctx *x);
+void getseed(ranctx * state);
+/**
+ * \brief dorand
+ *
+ * \details JSF Small fast PRNG
+ * Takes case to seed only once
+ * Can take seed from SCIM_RAND_SEED for testing
+ * Returns random number between min and max inclusive
+ * or 0 and 1 if max=0
+ * Takes seed from /dev/random and skips a random number or
+ * first values for added randomisation
+ *
+ * \param[in] i i
+ * \return double
+ */
+double dorand(int min,int max){
+    static ranctx  x;
+    double ret;
+    if(x.b==0 && x.c==0 && x.d == 0){
+        x.a = 0xf1ea5eed;
+        getseed(&x);
+        sc_debug("skipping first %u rands\n",x.start);
+        for (int i=x.start;i>0;i--)
+            (void)ranval(&x);
+    }
+    if(x.a == 0xf1ea5eed){
+        sc_error("rand: failed to initialise\n");
+        return 0;
+    }
+    if (max==0)
+        ret=(double)ranval(&x)/0xffffffffffffffff;
+    else
+        ret=(double)((u8)ranval(&x) % (max+1 -min )+min);
+    return ret;
+}
+
+u8 ranval( ranctx *x ) {
+    u8 e = x->a - rot64(x->b, 7);
+    x->a = x->b ^ rot64(x->c, 13);
+    x->b = x->c + rot64(x->d, 37);
+    x->c = x->d + e;
+    x->d = e + x->a;
+    return x->d;
+}
+
+void raninit( ranctx *x) {
+    u8 i;
+    x->a = 0xf1ea5eed, x->b = x->c = x->d = x->seed;
+    for (i=0; i<20; ++i) {
+        (void)ranval(x);
+    }
+}
+
+#include <errno.h>
+void getseed(ranctx * x)
+{
+    const char filename[] = "/dev/random";
+    FILE *dr;
+    int gotseed=0;
+    u8 seed;
+    uint16_t start;
+    const char *env_p = getenv("SCIM_RAND_SEED");
+    errno=0;
+    char * endptr;
+    if(env_p == NULL || strlen(env_p)>0){
+        u8 val = strtol(env_p, &endptr, 10);
+        if(errno==0 && (env_p!=endptr) && (*endptr=='\0')){ // got a number from env
+            x->seed=val;
+            x->start=0;
+            gotseed=1;
+        }
+    }
+    if(gotseed==0){  // not very elegant!
+        dr = fopen(filename,"r");
+        if(dr==NULL){
+            sc_error("rand: unable to open /dev/random");
+            return;
+        } else {
+            fread(&seed,sizeof(u8),1,dr);
+            x->seed = seed;
+            fread(&start,sizeof(uint16_t),1,dr);
+            x->start = start;
+            fclose(dr);
+        }
+    }
+    raninit(x);
+    return;
+}

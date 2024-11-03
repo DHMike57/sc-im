@@ -528,6 +528,12 @@ double eval(struct sheet * sh, struct ent * ent, struct enode * e, int rebuild_g
                  if (ent && getVertex(graph, sh, ent, 0) == NULL) GraphAddVertex(graph, sh, ent);
                  return ((double) M_PI);
 
+    case RAND:
+                 if(e->e.o.left==NULL){
+                     if (ent && getVertex(graph, sh, ent, 0) == NULL) GraphAddVertex(graph, sh, ent);
+                     return (dorand(0,0));}
+                 else
+                     return (dorand(eval(sh, ent, e->e.o.left, rebuild_graph), eval(sh, ent, e->e.o.right, rebuild_graph)));
     case BLACK:  return ((double) COLOR_BLACK);
     case RED:    return ((double) COLOR_RED);
     case GREEN:  return ((double) COLOR_GREEN);
@@ -1996,6 +2002,13 @@ void decompile(struct enode *e, int priority) {
     case ASCII: one_arg("@ascii(", e); break;
     case SLEN:  one_arg("@slen(", e); break;
     case EQS:   two_arg("@eqs(", e); break;
+    case RAND:
+            if (e->e.o.left){
+                two_arg("@rand(", e); break;
+            }else{
+                for (s = "@rand"; (line[linelim++] = *s++); );
+                linelim--; break;
+            }
     case LMAX:  list_arg("@max(", e); break;
     case LMIN:  list_arg("@min(", e); break;
     case FV:    three_arg("@fv(", e); break;

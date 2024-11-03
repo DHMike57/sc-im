@@ -376,6 +376,7 @@ token S_YANKCOL
 %token K_INDEX
 %token K_STINDEX
 %token K_GETENT
+%token K_RAND
 /*
 token K_AUTO
 token K_AUTOINSERT
@@ -1397,6 +1398,10 @@ term:   var                       {
         | '@' K_SLEN '(' e ')'    { $$ = new(SLEN, $4, ENULL); }
         | '@' K_EQS '(' e ',' e ')'
                                   { $$ = new(EQS, $4, $6); }
+        | '@' K_RAND '(' e ',' e ')'
+                                  { $$ = new(RAND, $4, $6); }
+        | '@' K_RAND
+                                  { $$ = new(RAND, NULL, NULL ); }
         | '@' K_DATE '(' e ')'    { $$ = new(DATE, $4, ENULL); }
         | '@' K_DATE '(' e ',' e ')'
                                   { $$ = new(DATE, $4, $6); }

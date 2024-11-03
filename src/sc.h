@@ -396,6 +396,7 @@ struct go_save {
 #define GETENT      (OP_BASE + 86)
 #define EVALUATE    (OP_BASE + 87)
 #define SEVALUATE   (OP_BASE + 88)
+#define RAND        (OP_BASE + 92)
 
 /* flag values */
 #define is_valid      0001
