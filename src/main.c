@@ -289,9 +289,14 @@ int main (int argc, char ** argv) {
      * load_rc().
      *
      * example in scimrc: decimal_precision=3
+     * then delete the redundant document
     */
-    create_empty_wb();
+    delete_structures();
+    create_structures();
+    // create main session
+    session = (struct session *) calloc(1, sizeof(struct session));
 
+    create_empty_wb();
     /* load file passed as argv to sc-im.
      * if more than one file is passed, consider the last one.
      */
