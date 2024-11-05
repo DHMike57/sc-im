@@ -144,6 +144,7 @@ L"int",
 L"iunmap",
 L"load!",
 L"load",
+L"read",
 L"lock",
 L"newsheet",
 L"nextsheet",
@@ -495,10 +496,67 @@ void do_commandmode(struct block * sb) {
                     create_structures();
                     // create main session
                     session = (struct session *) calloc(1, sizeof(struct session));
-                    load_file(name);
+                    load_file(name,0);
 
                     if (! get_conf_int("nocurses")) {
                       ui_show_header();
+                    }
+                }
+            }
+         } else if ( ! wcsncmp(inputline, L"read", 4) ) {
+            char name [BUFFERSIZE];
+            int name_ok = 0;
+            int force_rewrite = 0;
+            #ifndef NO_WORDEXP
+            size_t len;
+            wordexp_t p;
+            #endif
+
+            wcstombs(name, inputline, BUFFERSIZE);
+            del_range_chars(name, 0, 4);
+            if ( ! strlen(name) ) {
+                sc_error("Path to file to load is missing !");
+            } else {
+                #ifdef NO_WORDEXP
+                name_ok = 1;
+                #else
+                wordexp(name, &p, 0);
+                if ( p.we_wordc < 1 ) {
+                    sc_error("Failed expanding filepath");
+
+                } else if ( (len = strlen(p.we_wordv[0])) >= sizeof(name) ) {
+                    sc_error("File path too long");
+                    wordfree(&p);
+                } else {
+                    memcpy(name, p.we_wordv[0], len+1);
+                    name_ok = 1;
+                    wordfree(&p);
+                }
+                #endif
+            }
+
+            if ( name_ok ) {
+                if ( ! file_exists(name)) {
+                    sc_error("File %s does not exists!", name);
+                } else {
+                    // preserve roman->name
+                    char old_name [BUFFERSIZE];
+                    old_name[0]='\0';
+                    if (roman->name != NULL)
+                        strcpy(old_name,roman->name);
+                    load_file(name,1);  // 1 = merging flag
+                    if(old_name[0]==NULL){
+                        if(roman->name != NULL)
+                            free(roman->name);
+                        roman->name=NULL;
+                    }else if(roman->name != NULL){
+                        free(roman->name);
+                        roman->name=malloc(sizeof(old_name)+1);
+                        strcpy(roman->name,old_name);
+                    }
+
+                    if (! get_conf_int("nocurses")) {
+                        ui_show_header();
                     }
                 }
             }

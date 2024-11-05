@@ -4,6 +4,7 @@
 
 ## An experimental fork with a few added features and bug fixes for testing
 
+- added feature `read:` - import a file into a new sheet without overwriting
 - added `hmstosec`, `sectohms` and `sumtime` to convert between seconds and hh:mm:ss.dec formats
 - added configuration variable `default_date_fmt` which overrides locale: eg `set default_date_fmt="%d/%m/%Y`
 - added support for encryption via [ccrypt](https://ccrypt.sourceforge.net) (must be installed at make time).
@@ -14,8 +15,9 @@
 - added scripting SAVE command
 - crude fix for calculation/test7 bug.  (more TODO)
 - mipmip's decimal precision configuration feature
+  - fix for spurious second document
 - cross sheet spurious circular reference fix (crude, more TODO)
-
+- fix for segfault and infinite loop in incorrect input in `@replace`
 
 # NOTE 06/01/2023:
 This project needs some help.

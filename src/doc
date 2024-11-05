@@ -433,6 +433,12 @@ Commands for handling cell content:
                  Same as previous, but ignore changes done to the current
                  loaded spreadsheet.
 
+     :read {file}
+                As :load, but reads into a new sheet named with the filename,
+                preserving data in current sheet. Reading a .sc format file
+                will likely contain 'movetosheet' commands that could
+                overwrite the current sheet. CAUTION: undo is NOT active!
+
      :x          Save the current spreadsheet and quit sc-im.
      :wq
 

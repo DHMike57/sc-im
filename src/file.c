@@ -775,7 +775,7 @@ sc_readfile_result readfile(char * fname, int eraseflg) {
 
 #ifdef AUTOBACKUP
     // Check if curfile is set and backup exists..
-    if (str_in_str(fname, CONFIG_FILE) == -1 && strlen(curfile) &&
+    if (str_in_str(fname, CONFIG_FILE) == -1 && curfile != NULL && strlen(curfile) &&
     backup_exists(curfile) && strcmp(fname, curfile)) {
         if (roman->modflg) {
             // TODO - force load with '!' ??
@@ -2271,7 +2271,8 @@ void readfile_argv(int argc, char ** argv) {
  * the file may contain multiple sheets
  * \return none
  */
-void load_file(char * file) {
+void load_file(char * file,int import_flag) {
+    wchar_t cline[BUFFERSIZE];
     if (file == NULL || file[0] == '\0') return;
     // Do not calloc a new roman struct everytime. See 783 PR discussion.
     // use the one allocated when loading rc file.
@@ -2283,21 +2284,30 @@ void load_file(char * file) {
         session->cur_doc = roman; // important: set cur_doc!
     }
     // prevent memory leak 16/02/24
-    if (roman->cur_sh != NULL) {
+    if (roman->cur_sh != NULL && import_flag==0) {
         delete_sheet(roman, roman->cur_sh, 0);
     }
-
-    roman->name = ! strlen(file) ? NULL : strdup(file);
-    roman->first_sh = NULL;
-    roman->cur_sh = NULL;
+    if (import_flag == 0){
+        roman->name = ! strlen(file) ? NULL : strdup(file);
+        roman->first_sh = NULL;
+        roman->cur_sh = NULL;
 
     // malloc a clean sheet
     // to make old sc file loading backwards compatible, mark it as is_allocated
-    roman->cur_sh = roman->first_sh = new_sheet(roman, "Sheet1");
+        roman->cur_sh = roman->first_sh = new_sheet(roman, "Sheet1");
+    } else{
+        struct sheet * old_sh = roman->cur_sh;
+        swprintf(cline,BUFFERSIZE,L"%s \"%s\"","newsheet ",file);
+        send_to_interp(cline);
+        if(roman->cur_sh == old_sh)
+            return;
+    }
+
     roman->cur_sh->flags |= is_allocated;
 
     // grow sheet tbl
-    growtbl(roman->first_sh, GROWNEW, 0, 0);
+    if (import_flag == 0)
+        growtbl(roman->first_sh, GROWNEW, 0, 0);
 
     // load_tbl may open an sc file or a new sc-im file that can handle sheets.
     // new_sheet() would reuse Sheet1 if loading sc-im file.
