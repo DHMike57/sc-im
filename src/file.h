@@ -74,7 +74,7 @@ void openfile_nested(char * file);
 void openfile_under_cursor(int r, int c);
 
 // load functions
-void load_file(char * loading_file);
+void load_file(char * loading_file,int import_flag);
 void load_tbl(char * loading_file);
 void erasedb(struct sheet * sheet, int _free);
 void load_rc(void);

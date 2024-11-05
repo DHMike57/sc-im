@@ -282,7 +282,7 @@ int main (int argc, char ** argv) {
      * if more than one file is passed, consider the last one.
      */
     if (strlen(loadingfile))
-        load_file(loadingfile);
+        load_file(loadingfile,0);
 
 
     // check input from stdin (pipeline)
