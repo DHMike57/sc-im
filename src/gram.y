@@ -377,6 +377,7 @@ token S_YANKCOL
 %token K_STINDEX
 %token K_GETENT
 %token K_RAND
+%token K_CALC_ORDER
 /*
 token K_AUTO
 token K_AUTOINSERT
@@ -1772,5 +1773,16 @@ setitem :
                                      else         parse_str(user_conf_d, "show_cursor=1", TRUE); }
     |    K_SHOW_CURSOR            {               parse_str(user_conf_d, "show_cursor=1", TRUE); }
     |    K_NOSHOW_CURSOR          {               parse_str(user_conf_d, "show_cursor=0", TRUE); }
+    |    K_CALC_ORDER '=' strarg  {
+                                              char cmd[MAXCMD];
+                                              char * s = (char *) $3;
+                                              if (!strcasecmp(s,"byrows"))
+                                                    parse_str(user_conf_d, "calc_order=2", TRUE);
+                                              else if (!strcasecmp(s,"bycols"))
+                                                    parse_str(user_conf_d, "calc_order=1", TRUE);
+                                              else
+                                                    sc_error("invalid parameter: %s",s);
+                                              scxfree(s);
+                                              }
 
     ;

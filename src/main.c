@@ -96,7 +96,6 @@ struct session * session;
 char loadingfile[PATHLEN] = { '\0' };
 
 // app attributes. TODO: should be later added to conf
-int calc_order = BYROWS;
 char dpoint = '.'; /* Default decimal point character */
 char thsep = ','; /* Default thousands separator character */
 
@@ -251,7 +250,6 @@ int main (int argc, char ** argv) {
     wchar_t stdin_buffer[BUFFERSIZE] = { L'\0' };
 
     // take this out of here -->
-    calc_order = BYROWS;
     prescale = 1.0;
     optimize = 0; // <----
 

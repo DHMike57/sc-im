@@ -459,7 +459,6 @@ extern int skipautorun;
 extern char * fkey[FKEYS];
 extern char * scext;
 extern int repct;
-extern int calc_order;
 extern double prescale;
 extern int propagation;
 extern int optimize;

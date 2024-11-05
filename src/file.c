@@ -1077,7 +1077,7 @@ void print_options(FILE *f) {
     if (
             ! optimize &&
             ! rndtoeven &&
-            calc_order == BYROWS &&
+            get_conf_int("calc_order") == BYROWS &&
             prescale == 1.0 &&
             ! get_conf_int("external_functions")
        )
@@ -1086,7 +1086,7 @@ void print_options(FILE *f) {
     (void) fprintf(f, "set");
     if (optimize)              (void) fprintf(f," optimize");
     if (rndtoeven)             (void) fprintf(f, " rndtoeven");
-    if (calc_order != BYROWS ) (void) fprintf(f, " bycols");
+    if (get_conf_int("calc_order") != BYROWS ) (void) fprintf(f, " calc_order=\"bycols\"");
     if (prescale != 1.0)       (void) fprintf(f, " prescale");
     if ( get_conf_int("external_functions") ) (void) fprintf(f, " external_functions");
     (void) fprintf(f, "\n");

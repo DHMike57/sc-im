@@ -1344,7 +1344,7 @@ void fill(struct sheet * sh, struct ent * v1, struct ent * v2, double start, dou
     copy_to_undostruct(sh, minr, minc, maxr, maxc, UNDO_DEL, IGNORE_DEPS, NULL);
 #endif
 
-    if (calc_order == BYROWS) {
+    if (get_conf_int("calc_order") == BYROWS) {
         for (r = minr; r <= maxr; r++)
             for (c = minc; c <= maxc; c++) {
                 n = lookat(sh, r, c);
@@ -1356,7 +1356,7 @@ void fill(struct sheet * sh, struct ent * v1, struct ent * v2, double start, dou
                 n->flags &= ~(iscleared);
             }
     }
-    else if (calc_order == BYCOLS) {
+    else if (get_conf_int("calc_order") == BYCOLS) {
         for (c = minc; c <= maxc; c++)
             for (r = minr; r <= maxr; r++) {
                 n = lookat(sh, r, c);

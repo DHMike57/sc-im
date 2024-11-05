@@ -1455,6 +1455,9 @@ Commands for handling cell content:
     this will also be used in case you also want to copy/paste a range that have hidden rows in
     it (for instance, the result of an applied filter).
 
+    'calc_order' [default "byrows" (=2)]
+    valid options are "byrows" (=2) or "bycols" (=1).  Uncommon to need to set this.
+
 ==============================================================================
 &Built-in Range Functions&
 
@@ -1628,7 +1631,9 @@ Commands for handling cell content:
     @rand({expr1},{expr2}
         Returns a random number between {expr1} and {expr2} inclusive.  Valuise if
         these should not change on every recalc.  The seed can be taken from
-        SCIM_RAND_SEED for testing (same value on every call)
+        SCIM_RAND_SEED for testing (same value on every call).  You may need
+        to set calc_order to "byrows" or "bycols" if the number generated will
+        by used by more that one cell.
 
 ==============================================================================
 &String Expressions&

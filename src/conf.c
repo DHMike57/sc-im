@@ -81,6 +81,7 @@ const char default_config[] =
     "input_bar_bottom=0\n"
     "input_edit_mode=0\n"
     "underline_grid=0\n"
+    "calc_order=BYROWS\n"
 
 #ifdef AUTOBACKUP
     "autobackup=0\n"  // 0:noautobackup, n>0: backup every n in seconds

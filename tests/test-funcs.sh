@@ -10,6 +10,7 @@ VALGRIND_CMD='valgrind -v --log-file=${NAME}_vallog --tool=memcheck --track-orig
 . assert.sh
 
 CMD='
+set calc_order="bycols"\n
 let A0=@rand\n
 let A1=@rand(0,1000)\n
 let A2=@rand(1000,0)\n
