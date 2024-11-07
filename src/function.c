@@ -1174,23 +1174,31 @@ typedef struct ranct { u8 a; u8 b; u8 c; u8 d; u8 seed; u2 start; } ranctx;
 u8 ranval( ranctx *x );
 void raninit( ranctx *x);
 void getseed(ranctx * state);
+
 /**
  * \brief dorand
  *
  * \details JSF Small fast PRNG
  * Takes case to seed only once
  * Can take seed from SCIM_RAND_SEED for testing
- * Returns random number between min and max inclusive
- * or 0 and 1 if max=0
+ * Returns random whole number between min and max inclusive
+ * or between 0 and 1 if max=1 and min =0
  * Takes seed from /dev/random and skips a random number or
  * first values for added randomisation
+ * Range is selected with unsophisticated modulo operation
+ * which can introduce small low number bias - mimimal with high RAND_MAX
+ * and good quality PRNG
  *
- * \param[in] i i
+ * \param[in] int int
  * \return double
  */
 double dorand(int min,int max){
     static ranctx  x;
     double ret;
+    if(min>max){
+        sc_info("@rand: invalid input");
+        return 0;
+    }
     if(x.b==0 && x.c==0 && x.d == 0){
         x.a = 0xf1ea5eed;
         getseed(&x);
@@ -1202,10 +1210,10 @@ double dorand(int min,int max){
         sc_error("rand: failed to initialise\n");
         return 0;
     }
-    if (max==0)
+    if (max==1 && min == 0)
         ret=(double)ranval(&x)/0xffffffffffffffff;
     else
-        ret=(double)((u8)ranval(&x) % (max+1 -min )+min);
+        ret=(double)((u8)ranval(&x) % (max+1 -min ))+(double)min;
     return ret;
 }
 
@@ -1317,4 +1325,57 @@ void str_rev (char *st) {
         start++;
         end--;
     }
+}
+
+int compare_doubles(const void * a, const void * b);
+
+/**
+ * \brief domedian
+ *
+ * \details uses a simple quicksort method.  The mean of the middle
+ * two values is used when the number of cases is even.
+ *
+ * \param[in] sheet *
+ * \param[in] int int int in
+ * \param[in] enode *
+ * \return double
+ */
+double domedian(struct sheet * sh, int minr, int minc, int maxr, int maxc, struct enode * e) {
+    int r,c,tot=0;
+    double ret;
+    struct ent * p;
+    double * values;
+    values = (double *) scxmalloc((maxr - minr + 1) * (maxc-minc + 1)* sizeof(double) );
+
+    for (r = minr; r <= maxr; r++)
+        for(c = minc; c <= maxc; c++){
+            if(e){
+                rowoffset = r - minr;
+                coloffset = c - minc;
+            }
+            if (!e || eval(sh, NULL, e, 0))
+                if ((p = *ATBL(sh, sh->tbl, r, c)) && p->flags & is_valid){
+                    if (p->cellerror)
+                        cellerror = CELLINVALID;
+                    values[tot] = p->v;
+                    tot++;
+                }
+        }
+    qsort(values, tot, sizeof(double), compare_doubles);
+    if (tot % 2 == 0)
+        ret=((values[ tot / 2  -1 ] + values[tot / 2 ]) / 2); // take account of the 0 indexing
+    else
+        ret = (values[tot / 2  ]);
+    rowoffset = coloffset = 0;
+    scxfree((char *) values);
+    return ret;
+}
+
+int compare_doubles(const void * a, const void * b){
+    double i = *((double *)a);
+    double j = *((double *)b);
+
+    double diff = i - j;
+
+    return (diff > 0 ? 1 : diff < 0 ? -1 : 0);
 }

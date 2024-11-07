@@ -398,6 +398,7 @@ struct go_save {
 #define SEVALUATE   (OP_BASE + 88)
 #define RAND        (OP_BASE + 92)
 #define FIND        (OP_BASE + 93)
+#define MEDIAN        (OP_BASE + 94)
 
 /* flag values */
 #define is_valid      0001

@@ -312,6 +312,7 @@ token S_YANKCOL
 %token K_PROD
 %token K_AVG
 %token K_STDDEV
+%token K_MEDIAN
 %token K_COUNT
 %token K_ROWS
 %token K_COLS
@@ -1314,6 +1315,8 @@ term:   var                       {
                                   { $$ = new(SUM, new_range(REDUCE | SUM, $4), ENULL); }
         | '@' K_SUM  '(' range ',' e ')'
                                   { $$ = new(SUM, new_range(REDUCE | SUM, $4), $6); }
+        | '@' K_MEDIAN '(' var_or_range ')'
+                                  { $$ = new(MEDIAN, new_range(REDUCE | SUM, $4), ENULL); }
         | '@' K_PROD '(' var_or_range ')'
                                   { $$ = new(PROD, new_range(REDUCE | PROD, $4), ENULL); }
         | '@' K_PROD  '(' range ',' e ')'

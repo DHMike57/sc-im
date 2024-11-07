@@ -314,6 +314,7 @@ double eval(struct sheet * sh, struct ent * ent, struct enode * e, int rebuild_g
     case AVG:
     case COUNT:
     case STDDEV:
+    case MEDIAN:
     case MAX:
     case MIN:
     case INDEX:
@@ -363,6 +364,8 @@ double eval(struct sheet * sh, struct ent * ent, struct enode * e, int rebuild_g
                 return docount(sh, minr, minc, maxr, maxc, e->e.o.right);
             case STDDEV:
                 return dostddev(sh, minr, minc, maxr, maxc, e->e.o.right);
+            case MEDIAN:
+                return domedian(sh, minr, minc, maxr, maxc, e->e.o.right);
             case MAX:
                 return domax(sh, minr, minc, maxr, maxc, e->e.o.right);
             case MIN:
@@ -540,7 +543,7 @@ double eval(struct sheet * sh, struct ent * ent, struct enode * e, int rebuild_g
     case RAND:
                  if(e->e.o.left==NULL){
                      if (ent && getVertex(graph, sh, ent, 0) == NULL) GraphAddVertex(graph, sh, ent);
-                     return (dorand(0,0));}
+                     return (dorand(0,1));}
                  else
                      return (dorand(eval(sh, ent, e->e.o.left, rebuild_graph), eval(sh, ent, e->e.o.right, rebuild_graph)));
     case BLACK:  return ((double) COLOR_BLACK);
@@ -1957,6 +1960,7 @@ void decompile(struct enode *e, int priority) {
     case AVG    : index_arg("@avg", e); break;
     case COUNT  : index_arg("@count", e); break;
     case STDDEV : index_arg("@stddev", e); break;
+    case MEDIAN : index_arg("@median", e); break;
     case MAX    : index_arg("@max", e); break;
     case MIN    : index_arg("@min", e); break;
     case REDUCE | 'R': range_arg("@rows(", e); break;
