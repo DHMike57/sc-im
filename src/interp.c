@@ -462,8 +462,8 @@ double eval(struct sheet * sh, struct ent * ent, struct enode * e, int rebuild_g
                     (int)eval(sh, ent, e->e.o.right->e.o.left, rebuild_graph),
                     (int)eval(sh, ent, e->e.o.right->e.o.right, rebuild_graph)));
     case TTS:    return (dotts((int) eval(sh, ent, e->e.o.left, rebuild_graph),
-                    (int)eval(sh, ent, e->e.o.right->e.o.left, rebuild_graph),
-                    (int)eval(sh, ent, e->e.o.right->e.o.right, rebuild_graph)));
+                    (int)eval(sh, ent,             e->e.o.right->e.o.left, rebuild_graph),
+                    (int)eval(sh, ent,             e->e.o.right->e.o.right, rebuild_graph)));
 
     case EVALUATE:
                  if (ent && getVertex(graph, sh, ent, 0) == NULL) GraphAddVertex(graph, sh, ent);
@@ -541,11 +541,20 @@ double eval(struct sheet * sh, struct ent * ent, struct enode * e, int rebuild_g
                  return ((double) M_PI);
 
     case RAND:
-                 if(e->e.o.left==NULL){
-                     if (ent && getVertex(graph, sh, ent, 0) == NULL) GraphAddVertex(graph, sh, ent);
-                     return (dorand(0,1));}
+                 if (ent && getVertex(graph, sh, ent, 0) == NULL) GraphAddVertex(graph, sh, ent);
+                 if(e->e.o.left==NULL && e->e.o.right==NULL)
+                     return (dorand(0,1,0,0));
                  else
-                     return (dorand(eval(sh, ent, e->e.o.left, rebuild_graph), eval(sh, ent, e->e.o.right, rebuild_graph)));
+                     return (dorand(eval(sh, ent, e->e.o.left, rebuild_graph), eval(sh, ent, e->e.o.right, rebuild_graph),0,1));
+    case NRAND:
+                 if (ent && getVertex(graph, sh, ent, 0) == NULL) GraphAddVertex(graph, sh, ent);
+                     return (dorand(0,1,0,2));
+    case XRAND:
+                 if (ent && getVertex(graph, sh, ent, 0) == NULL) GraphAddVertex(graph, sh, ent);
+                 return (dorand(0,1, eval(sh, ent, e->e.o.left, rebuild_graph),3));
+    case PRAND:
+                 if (ent && getVertex(graph, sh, ent, 0) == NULL) GraphAddVertex(graph, sh, ent);
+                 return (dorand(0,1, eval(sh, ent, e->e.o.left, rebuild_graph),4));
     case BLACK:  return ((double) COLOR_BLACK);
     case RED:    return ((double) COLOR_RED);
     case GREEN:  return ((double) COLOR_GREEN);
@@ -2020,13 +2029,19 @@ void decompile(struct enode *e, int priority) {
     case ASCII: one_arg("@ascii(", e); break;
     case SLEN:  one_arg("@slen(", e); break;
     case EQS:   two_arg("@eqs(", e); break;
+    case XRAND: one_arg("@rexp(", e); break;
+    case PRAND: one_arg("@rpois(", e); break;
     case RAND:
-            if (e->e.o.left){
+            if (e->e.o.left && e->e.o.right){
                 two_arg("@rand(", e); break;
-            }else{
+            } else if (e->e.o.left){
                 for (s = "@rand"; (line[linelim++] = *s++); );
                 linelim--; break;
             }
+            break;
+    case NRAND:
+                for (s = "@rnorm"; (line[linelim++] = *s++); );
+                linelim--; break;
     case LMAX:  list_arg("@max(", e); break;
     case LMIN:  list_arg("@min(", e); break;
     case FV:    three_arg("@fv(", e); break;

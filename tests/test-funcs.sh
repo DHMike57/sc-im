@@ -16,6 +16,12 @@ let A1=@rand(0,1000)\n
 let A2=@rand(1000,0)\n
 let A3=@rand(1000,1000)\n
 let A4=@rand(-10,0)\n
+let b0=@prand(6)\n
+let b1=@prand(6)\n
+let b2=@nrand\n
+let b3=@nrand\n
+let b4=@xrand(5)\n
+let b5=@xrand(0.5)\n
 let A5=@find(":","st:ring:a",1)\n
 let A6=@find(":","st:ring:a",2)\n
 let A7=@find(":","st:ring:a",-1)\n
@@ -26,17 +32,29 @@ GETNUM A1\n
 GETNUM A2\n
 GETNUM A3\n
 GETNUM A4\n
+GETNUM B0\n
+GETNUM B1\n
+GETNUM B2\n
+GETNUM B3\n
+GETNUM B4\n
+GETNUM B5\n
 GETNUM A5\n
 GETNUM A6\n
 GETNUM A7\n
 GETNUM A8\n
 '
 EXP="
-0.469834515679288\n\
-610\n\
+0.823720814285708\n\
+984\n\
 0\n\
 1000\n\
--4\n\
+-5\n\
+6\n\
+10\n\
+0.351318769677963\n\
+-0.5089201755285\n\
+0.346454045097051\n\
+1.3561880949397\n\
 3\n\
 8\n\
 8\n\

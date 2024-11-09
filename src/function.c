@@ -1181,20 +1181,27 @@ void getseed(ranctx * state);
  * \details JSF Small fast PRNG
  * Takes case to seed only once
  * Can take seed from SCIM_RAND_SEED for testing
- * Returns random whole number between min and max inclusive
- * or between 0 and 1 if max=1 and min =0
  * Takes seed from /dev/random and skips a random number or
  * first values for added randomisation
  * Range is selected with unsophisticated modulo operation
  * which can introduce small low number bias - mimimal with high RAND_MAX
  * and good quality PRNG
+ * Similarly, rescaling to [0-1] by dividine by max rand.
+ *
+ * dist = 0 : uniformly distributed decimals range 0 - 1
+ * dist = 1 "           "      whole numbers range min - max
+ * dist = 2 normally       "     decimals range 0 - -1
+ * dist = 3 + lambda  expontial distribution [0-1]
+ * dist = 4 + mean    poisson distribution
  *
  * \param[in] int int
+ * \param[in] double double
  * \return double
  */
-double dorand(int min,int max){
+double dorand(int min,int max,double param,double dist){
     static ranctx  x;
     double ret;
+
     if(min>max){
         sc_info("@rand: invalid input");
         return 0;
@@ -1202,7 +1209,6 @@ double dorand(int min,int max){
     if(x.b==0 && x.c==0 && x.d == 0){
         x.a = 0xf1ea5eed;
         getseed(&x);
-        sc_debug("skipping first %u rands\n",x.start);
         for (int i=x.start;i>0;i--)
             (void)ranval(&x);
     }
@@ -1210,13 +1216,49 @@ double dorand(int min,int max){
         sc_error("rand: failed to initialise\n");
         return 0;
     }
-    if (max==1 && min == 0)
-        ret=(double)ranval(&x)/0xffffffffffffffff;
-    else
-        ret=(double)((u8)ranval(&x) % (max+1 -min ))+(double)min;
+    switch((int)dist){
+        case 0:  // uniform [0-1]
+            ret=(double)ranval(&x)/0xffffffffffffffff;
+            break;
+        case 1: // uniform [max-min]
+            ret=(double)((u8)ranval(&x) % (max+1 -min ))+(double)min;
+            break;
+        case 2:
+            // box_muller normal dist. var=1 mean=0
+            double R1;
+            static double R2;
+            static int pending=0;
+            if(pending==1){
+                pending=0;
+                ret= R2;
+            } else {
+                double U=(double)ranval(&x)/0xffffffffffffffff;
+                double V=(double)ranval(&x)/0xffffffffffffffff;
+                R1=sqrt(-2*log(U))* cos(2 *M_PI *V);
+                R2=sqrt(-2*log(U))* sin(2 *M_PI *V);
+                pending=1;
+                ret= R1;
+            }
+            break;
+        case 3: // exponenential.  param is lambda
+            double U=(double)ranval(&x)/0xffffffffffffffff;
+            ret=log(1-U)/(-1*param);
+            break;
+        case 4: // poisson. param is mean
+            double L = exp(-param);
+            double p = 1;
+            int result = 0;
+            do {
+                result++;
+                p *= (double)ranval(&x)/0xffffffffffffffff;
+            } while (p > L);
+            result--;
+            ret= (double)result;
+            break;
+    }
     return ret;
 }
-
+//******** Support functions for dorand
 u8 ranval( ranctx *x ) {
     u8 e = x->a - rot64(x->b, 7);
     x->a = x->b ^ rot64(x->c, 13);
@@ -1266,10 +1308,13 @@ void getseed(ranctx * x)
             fclose(dr);
         }
     }
+    sc_debug("rand: setting seed to %u",seed);
     raninit(x);
     return;
 }
 
+// **********************************************8
+//
 void str_rev (char *st)  ;
 
 /**

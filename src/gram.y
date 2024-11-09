@@ -378,6 +378,9 @@ token S_YANKCOL
 %token K_STINDEX
 %token K_GETENT
 %token K_RAND
+%token K_NRAND
+%token K_XRAND
+%token K_PRAND
 %token K_CALC_ORDER
 /*
 token K_AUTO
@@ -1316,7 +1319,7 @@ term:   var                       {
         | '@' K_SUM  '(' range ',' e ')'
                                   { $$ = new(SUM, new_range(REDUCE | SUM, $4), $6); }
         | '@' K_MEDIAN '(' var_or_range ')'
-                                  { $$ = new(MEDIAN, new_range(REDUCE | SUM, $4), ENULL); }
+                                  { $$ = new(MEDIAN, new_range(REDUCE | MEDIAN, $4), ENULL); }
         | '@' K_PROD '(' var_or_range ')'
                                   { $$ = new(PROD, new_range(REDUCE | PROD, $4), ENULL); }
         | '@' K_PROD  '(' range ',' e ')'
@@ -1403,10 +1406,16 @@ term:   var                       {
         | '@' K_SLEN '(' e ')'    { $$ = new(SLEN, $4, ENULL); }
         | '@' K_EQS '(' e ',' e ')'
                                   { $$ = new(EQS, $4, $6); }
+        | '@' K_RAND
+                                  { $$ = new(RAND, ENULL, ENULL); }
         | '@' K_RAND '(' e ',' e ')'
                                   { $$ = new(RAND, $4, $6); }
-        | '@' K_RAND
-                                  { $$ = new(RAND, ENULL, ENULL ); }
+        | '@' K_NRAND
+                                  { $$ = new(NRAND, ENULL, ENULL); }
+        | '@' K_XRAND '(' e ')'
+                                  { $$ = new(XRAND, $4, ENULL); }
+        | '@' K_PRAND '(' e ')'
+                                  { $$ = new(PRAND, $4, ENULL); }
         | '@' K_DATE '(' e ')'    { $$ = new(DATE, $4, ENULL); }
         | '@' K_DATE '(' e ',' e ')'
                                   { $$ = new(DATE, $4, $6); }

@@ -1099,10 +1099,11 @@ Commands for handling cell content:
                 allowed.
 
                 Ex. of use:     :plot line
-                This command calls gnuplot using the file called 'plotline'
-                that is first looked in $HOME/.config/sc-im/, and if not found in
+                This command calls gnuplot using the file called 'plot_line'
+                that is first looked in the current directory, then
+                $HOME/.config/sc-im/, and if still not found in
                 /usr/local/share/sc-im/ (or HELPDIR path of Makefile).
-                This 'plotline' can be customized by user. (See :plotedit
+                This 'plot_line' can be customized by user. (See :plotedit
                 command below). You can set terminal and other gnuplot
                 parameters. Default terminal is 'dumb', although 'caca'
                 terminal is recommended for colors and wide chars support.
@@ -1632,10 +1633,16 @@ Commands for handling cell content:
         update the value of cell A0, it will not get updated in cell D0.
 
     @rand
-        Returns a random decimal number between 0 and 1
+        Returns a random decimal number between 0 and 1 (uniform)
+    @nrand
+        Returns a random decimal number between 0 and 1 (normal, mean=0, sd=1)
+    @prand({mean})
+        Returns a random whole number from poisson distribution
+    @xrand({lambda})
+        Returns a random decimal number from exponential distribution
     @rand({expr1},{expr2}
-        Returns a random whole number between {expr1} and {expr2} inclusive.
-        Valuise if these should not change on every recalc.  The seed can be
+        Returns a random whole number (uniform) between {expr1} and {expr2} inclusive.
+        Valuise if these should not change on every recalc.  In this family the seed can be
         taken from SCIM_RAND_SEED for testing (same value on every call).  You
         may need to set calc_order to "byrows" or "bycols" if the number
         generated will by used by more that one cell.

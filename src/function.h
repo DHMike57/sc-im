@@ -81,7 +81,7 @@ double docol(struct enode * ep);
 double doascii(char * s);
 char * doreplace(char * source, char * old, char * new_);
 char * dochr(double ascii);
-double dorand(int min,int max);
+double dorand(int min,int max,double param,double dist);
 double dofind(char * label,char *s, int instance);
 double domedian(struct sheet * sh, int minr, int minc, int maxr, int maxc, struct enode * e);
 
