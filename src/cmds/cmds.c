@@ -604,6 +604,7 @@ struct enode * copye(struct enode *e, struct sheet * sh, int Rdelta, int Cdelta,
         switch (ret->op) {
             case SUM:
             case PROD:
+            case SUMPROD:
             case AVG:
             case COUNT:
             case STDDEV:

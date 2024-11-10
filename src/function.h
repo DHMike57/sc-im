@@ -49,6 +49,8 @@ double doindex(struct sheet * sh, int minr, int minc, int maxr, int maxc, struct
 double dolookup(struct sheet * sh, struct enode * val, int minr, int minc, int maxr, int maxc, int offset, int vflag);
 double docount(struct sheet * sh, int minr, int minc, int maxr, int maxc, struct enode * e);
 double dosum(struct sheet * sh, int minr, int minc, int maxr, int maxc, struct enode * e);
+double dosumprod(struct sheet * sh, int minr, int minc, int maxr, int maxc,
+                                    int minr2, int minc2, int maxr2, int maxc2, struct enode * e);
 double doprod(struct sheet * sh, int minr, int minc, int maxr, int maxc, struct enode * e);
 double doavg(struct sheet * sh, int minr, int minc, int maxr, int maxc, struct enode * e);
 double dostddev(struct sheet * sh, int minr, int minc, int maxr, int maxc, struct enode * e);

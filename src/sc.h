@@ -402,6 +402,7 @@ struct go_save {
 #define PRAND       (OP_BASE + 95)
 #define FIND        (OP_BASE + 96)
 #define MEDIAN      (OP_BASE + 97)
+#define SUMPROD     (OP_BASE + 98)
 
 /* flag values */
 #define is_valid      0001

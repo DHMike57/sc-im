@@ -58,7 +58,7 @@ EXP="
 3\n\
 8\n\
 8\n\
-3
+3\n\
 "
 # need this to get coverage of seed generation
 CMD2='
@@ -98,7 +98,25 @@ EXP3="
 2\n\
 -1
 "
+# sumprod
+CMD4='
+let E24 = @sumprod(A20:A22,C20:C22)\n
+let E25 = @sumprod(A20:A22,C20:C22,@eqs(G20,"a"))\n
+let E26 = @sumprod(A20:B22,C20:D22,A20<20)\n
+let E27 = @sumprod(A20:B22,C20:D22)\n
+recalc\n
+GETNUM E24\n
+GETNUM E25\n
+GETNUM E26\n
+GETNUM E27\n
+'
 
+EXP4="
+32\n\
+22\n\
+102\n\
+532
+"
 check_log(){
 #we check valgrind log
 assert_iffound_notcond ${NAME}_vallog "definitely lost.*bytes" "0 bytes"
@@ -111,16 +129,27 @@ assert_iffound_notcond ${NAME}_vallog "Invalid write of size"
 assert_iffound_notcond ${NAME}_vallog "Invalid free() / delete"
 }
 
+# @rand with seed generation
 assert "echo -e '${CMD2}' | $VALGRIND_CMD ../src/sc-im ${NAME}.sc --nocurses --nodebug --quit_afterload 2>&1 |grep -v '^$\|Interp\|Change\|wider'" ""
 check_log
-mv ${NAME}_vallog ${NAME}_1_vallog
+mv ${NAME}_vallog ${NAME}_2_vallog
 export SCIM_RAND_SEED=0
 #echo -e "${CMD}" | ../src/sc-im ${NAME}.sc --nocurses --nodebug --quit_afterload 2>&1
+
+# @rand family and @find
 assert "echo -e '${CMD}' | $VALGRIND_CMD ../src/sc-im ${NAME}.sc --nocurses --nodebug --quit_afterload 2>&1 |grep -v '^$\|Interp\|Change\|wider\|invalid'" $EXP
 check_log
+mv ${NAME}_vallog ${NAME}_1_vallog
+
+# @median
 assert "echo -e '${CMD3}' | $VALGRIND_CMD ../src/sc-im ${NAME}.sc --nocurses --nodebug --quit_afterload 2>&1 |grep -v '^$\|Interp\|Change\|wider\|invalid'" $EXP3
 check_log
-mv ${NAME}_vallog ${NAME}_2_vallog
+mv ${NAME}_vallog ${NAME}_3_vallog
+
+# @sumprod
+assert "echo -e '${CMD4}' | $VALGRIND_CMD ../src/sc-im ${NAME}.sc --nocurses --nodebug --quit_afterload 2>&1 |grep -v '^$\|Interp\|Change\|wider\|invalid'" $EXP4
+check_log
+mv ${NAME}_vallog ${NAME}_4_vallog
 
 if [ "$1" != "keep-vallog" ];then
    rm ${NAME}_?_vallog

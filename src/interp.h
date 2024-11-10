@@ -80,6 +80,7 @@ void decompile_list(struct enode * p);
 void decompile(struct enode * e, int priority);
 void index_arg(char * s, struct enode * e);
 void two_arg_index(char * s, struct enode * e);
+void index_two_range_arg(char *s, struct enode *e);
 void list_arg(char * s, struct enode * e);
 void one_arg(char * s, struct enode * e);
 void two_arg(char * s, struct enode * e);

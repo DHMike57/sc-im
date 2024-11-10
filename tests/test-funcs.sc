@@ -56,4 +56,23 @@ let C8 = -3
 let D8 = 1
 let E8 = 2
 let F8 = 3
-goto G0
+let A20 = 1
+let B20 = 10
+let C20 = 4
+let D20 = 7
+let E20 = A20*C20
+label G20 = "a"
+let A21 = 2
+let B21 = 20
+let C21 = 5
+let D21 = 8
+let E21 = A21*C21
+label G21 = "b"
+let A22 = 3
+let B22 = 30
+let C22 = 6
+let D22 = 9
+let E22 = A22*C22
+label G22 = "a"
+let E23 = @sum(E20:E22)
+goto E24

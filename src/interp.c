@@ -311,6 +311,7 @@ double eval(struct sheet * sh, struct ent * ent, struct enode * e, int rebuild_g
             }
     case SUM:
     case PROD:
+    case SUMPROD:
     case AVG:
     case COUNT:
     case STDDEV:
@@ -370,6 +371,30 @@ double eval(struct sheet * sh, struct ent * ent, struct enode * e, int rebuild_g
                 return domax(sh, minr, minc, maxr, maxc, e->e.o.right);
             case MIN:
                 return domin(sh, minr, minc, maxr, maxc, e->e.o.right);
+            case SUMPROD:
+                int r2, c2, row2, col2;
+                int maxr2, maxc2;
+                int minr2, minc2;
+                maxr2 = e->e.o.right->e.o.left->e.r.left.vp->row;
+                maxc2 = e->e.o.right->e.o.left->e.r.left.vp->col;
+                minr2 = e->e.o.right->e.o.left->e.r.right.vp->row;
+                minc2 = e->e.o.right->e.o.left->e.r.right.vp->col;
+                if (minr2>maxr2) r2 = maxr2, maxr2 = minr2, minr2 = r2;
+                if (minc2>maxc2) c2 = maxc2, maxc2 = minc2, minc2 = c2;
+
+                for (row2=minr2; ent != NULL && row2 <= maxr2; row2++) {
+                    for (col2=minc2; col2 <= maxc2; col2++) {
+                        if (ent->row == row2 && ent->col == col2) {
+                            sc_error("Circular reference in eval (cell %s%d)", coltoa(col2), row2);
+                            e->op = ERR_;
+                            cellerror = CELLERROR;
+                            return (double) 0;
+                        }
+                        GraphAddEdge(getVertex(graph, sh, lookat(sh, ent->row, ent->col), 1), getVertex(graph, sh, lookat(sh, row2, col2), 1));
+                    }
+                }
+                return dosumprod(sh, minr,  minc,  maxr,  maxc,
+                                     minr2, minc2, maxr2, maxc2,e->e.o.right->e.o.right);
         }
     }
     case REDUCE | 'R':
@@ -1965,6 +1990,7 @@ void decompile(struct enode *e, int priority) {
             break;
 
     case SUM    : index_arg("@sum", e); break;
+    case SUMPROD: index_two_range_arg("@sumprod", e); break;
     case PROD   : index_arg("@prod", e); break;
     case AVG    : index_arg("@avg", e); break;
     case COUNT  : index_arg("@count", e); break;
@@ -2168,6 +2194,19 @@ void index_arg(char *s, struct enode *e) {
     line[linelim++] = ')';
 }
 
+void index_two_range_arg(char *s, struct enode *e) {
+    for (; (line[linelim++] = *s++); );
+    linelim--;
+    range_arg("(", e->e.o.left);
+    linelim--;
+    range_arg(",", e->e.o.right->e.o.left);
+    linelim--;
+    if (e->e.o.right->e.o.right) {
+        line[linelim++] = ',';
+        decompile(e->e.o.right->e.o.right, 0);
+    }
+    line[linelim++] = ')';
+}
 
 /**
  * \brief two_arg_index()

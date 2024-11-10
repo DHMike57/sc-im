@@ -1483,6 +1483,11 @@ Commands for handling cell content:
     @prod({range},{expr})
         Multiply the values together.
 
+    @sumproduct({range1},{range2})
+    @sumproduct({range1},{range2},{expr})
+        sum the products of the corresponding rows.
+        optional {expr} as @sum
+
     @avg({range})
     @avg({range},{expr})
         Average the values.

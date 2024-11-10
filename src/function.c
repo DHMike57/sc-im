@@ -384,6 +384,48 @@ double doprod(struct sheet * sh, int minr, int minc, int maxr, int maxc, struct 
     return v;
 }
 
+/**
+ * \brief dosumprod()
+ * \details sum the products of the corresponding rows.
+ * \param[in] minr, minc
+ * \param[in] maxr, maxc
+ * \param[in] minr2, minc2
+ * \param[in] maxr2, maxc2
+ * \param[in] e
+ * \return double
+ */
+double dosumprod(struct sheet * sh, int minr, int minc, int maxr, int maxc,
+        int minr2, int minc2, int maxr2, int maxc2, struct enode * e){
+    if(maxr-minr != maxr2-minr2 || maxc-minc != maxc2-minc2)
+        sc_error("sumprod: ranges do not match");
+    int r, c;
+    int r2, c2;
+    int cellerr = CELLOK;
+    struct ent * p;
+    double v=0,v2=0;
+    double ret=0;
+    for (r = minr,r2=minr2; r <= maxr; r++,r2++)
+        for (c = minc, c2=minc2; c <= maxc; c++, c2++) {
+            if (e) {
+                rowoffset = r - minr;
+                coloffset = c - minc;
+            }
+            if ( !e || eval(sh, NULL, e, 0)){
+                if ((p = *ATBL(sh, sh->tbl, r, c)) && p->flags & is_valid) {
+                    if (p->cellerror) cellerr = CELLINVALID;
+                    v = p->v;
+                }
+                if ((p = *ATBL(sh, sh->tbl, r2, c2)) && p->flags & is_valid) {
+                    if (p->cellerror) cellerr = CELLINVALID;
+                    v2 = p->v;
+                }
+                ret+=v*v2;
+            }
+        }
+    cellerror = cellerr;
+    rowoffset = coloffset = 0;
+    return ret;
+}
 
 /**
  * \brief doavg()
