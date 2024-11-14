@@ -5,6 +5,12 @@
 ## An experimental fork with a few added features and bug fixes for testing
 
 - added feature `read:` - import a file into a new sheet without overwriting
+- added functions:
+  - `rand` family with distributions
+    - `rand`, `prand`, `nrand`, `xrand` - uniform, poisson, normal and exponential
+  - `sumprod` - modelled on excel function
+  - `median`
+  - `find` - locate index of char in string (useful for `substr`)
 - added `hmstosec`, `sectohms` and `sumtime` to convert between seconds and hh:mm:ss.dec formats
 - added configuration variable `default_date_fmt` which overrides locale: eg `set default_date_fmt="%d/%m/%Y`
 - added support for encryption via [ccrypt](https://ccrypt.sourceforge.net) (must be installed at make time).

@@ -311,9 +311,11 @@ double eval(struct sheet * sh, struct ent * ent, struct enode * e, int rebuild_g
             }
     case SUM:
     case PROD:
+    case SUMPROD:
     case AVG:
     case COUNT:
     case STDDEV:
+    case MEDIAN:
     case MAX:
     case MIN:
     case INDEX:
@@ -363,10 +365,36 @@ double eval(struct sheet * sh, struct ent * ent, struct enode * e, int rebuild_g
                 return docount(sh, minr, minc, maxr, maxc, e->e.o.right);
             case STDDEV:
                 return dostddev(sh, minr, minc, maxr, maxc, e->e.o.right);
+            case MEDIAN:
+                return domedian(sh, minr, minc, maxr, maxc, e->e.o.right);
             case MAX:
                 return domax(sh, minr, minc, maxr, maxc, e->e.o.right);
             case MIN:
                 return domin(sh, minr, minc, maxr, maxc, e->e.o.right);
+            case SUMPROD:
+                int r2, c2, row2, col2;
+                int maxr2, maxc2;
+                int minr2, minc2;
+                maxr2 = e->e.o.right->e.o.left->e.r.left.vp->row;
+                maxc2 = e->e.o.right->e.o.left->e.r.left.vp->col;
+                minr2 = e->e.o.right->e.o.left->e.r.right.vp->row;
+                minc2 = e->e.o.right->e.o.left->e.r.right.vp->col;
+                if (minr2>maxr2) r2 = maxr2, maxr2 = minr2, minr2 = r2;
+                if (minc2>maxc2) c2 = maxc2, maxc2 = minc2, minc2 = c2;
+
+                for (row2=minr2; ent != NULL && row2 <= maxr2; row2++) {
+                    for (col2=minc2; col2 <= maxc2; col2++) {
+                        if (ent->row == row2 && ent->col == col2) {
+                            sc_error("Circular reference in eval (cell %s%d)", coltoa(col2), row2);
+                            e->op = ERR_;
+                            cellerror = CELLERROR;
+                            return (double) 0;
+                        }
+                        GraphAddEdge(getVertex(graph, sh, lookat(sh, ent->row, ent->col), 1), getVertex(graph, sh, lookat(sh, row2, col2), 1));
+                    }
+                }
+                return dosumprod(sh, minr,  minc,  maxr,  maxc,
+                                     minr2, minc2, maxr2, maxc2,e->e.o.right->e.o.right);
         }
     }
     case REDUCE | 'R':
@@ -464,8 +492,8 @@ double eval(struct sheet * sh, struct ent * ent, struct enode * e, int rebuild_g
                     (int)eval(sh, ent, e->e.o.right->e.o.left, rebuild_graph),
                     (int)eval(sh, ent, e->e.o.right->e.o.right, rebuild_graph)));
     case TTS:    return (dotts((int) eval(sh, ent, e->e.o.left, rebuild_graph),
-                    (int)eval(sh, ent, e->e.o.right->e.o.left, rebuild_graph),
-                    (int)eval(sh, ent, e->e.o.right->e.o.right, rebuild_graph)));
+                    (int)eval(sh, ent,             e->e.o.right->e.o.left, rebuild_graph),
+                    (int)eval(sh, ent,             e->e.o.right->e.o.right, rebuild_graph)));
 
     case EVALUATE:
                  if (ent && getVertex(graph, sh, ent, 0) == NULL) GraphAddVertex(graph, sh, ent);
@@ -474,6 +502,15 @@ double eval(struct sheet * sh, struct ent * ent, struct enode * e, int rebuild_g
     case STON:
                  if (ent && getVertex(graph, sh, ent, 0) == NULL) GraphAddVertex(graph, sh, ent);
                  return (doston(seval(sh, ent, e->e.o.left, rebuild_graph)));
+    case FIND:
+                 if (ent && getVertex(graph, sh, ent, 0) == NULL) GraphAddVertex(graph, sh, ent);
+                 if(e->e.o.right->e.o.right != NULL)
+                     return (dofind(seval(sh, ent, e->e.o.left, rebuild_graph),
+                                    seval(sh, ent, e->e.o.right->e.o.left, rebuild_graph),
+                                    eval(sh, ent, e->e.o.right->e.o.right, rebuild_graph)));
+                 else
+                     return (dofind(seval(sh, ent, e->e.o.left, rebuild_graph),
+                                    seval(sh, ent, e->e.o.right, rebuild_graph),1));
 
     case ASCII:  return (doascii(seval(sh, ent, e->e.o.left, rebuild_graph)));
 
@@ -533,6 +570,21 @@ double eval(struct sheet * sh, struct ent * ent, struct enode * e, int rebuild_g
                  if (ent && getVertex(graph, sh, ent, 0) == NULL) GraphAddVertex(graph, sh, ent);
                  return ((double) M_PI);
 
+    case RAND:
+                 if (ent && getVertex(graph, sh, ent, 0) == NULL) GraphAddVertex(graph, sh, ent);
+                 if(e->e.o.left==NULL && e->e.o.right==NULL)
+                     return (dorand(0,1,0,0));
+                 else
+                     return (dorand(eval(sh, ent, e->e.o.left, rebuild_graph), eval(sh, ent, e->e.o.right, rebuild_graph),0,1));
+    case NRAND:
+                 if (ent && getVertex(graph, sh, ent, 0) == NULL) GraphAddVertex(graph, sh, ent);
+                     return (dorand(0,1,0,2));
+    case XRAND:
+                 if (ent && getVertex(graph, sh, ent, 0) == NULL) GraphAddVertex(graph, sh, ent);
+                 return (dorand(0,1, eval(sh, ent, e->e.o.left, rebuild_graph),3));
+    case PRAND:
+                 if (ent && getVertex(graph, sh, ent, 0) == NULL) GraphAddVertex(graph, sh, ent);
+                 return (dorand(0,1, eval(sh, ent, e->e.o.left, rebuild_graph),4));
     case BLACK:  return ((double) COLOR_BLACK);
     case RED:    return ((double) COLOR_RED);
     case GREEN:  return ((double) COLOR_GREEN);
@@ -1366,7 +1418,7 @@ void fill(struct sheet * sh, struct ent * v1, struct ent * v2, double start, dou
     copy_to_undostruct(sh, minr, minc, maxr, maxc, UNDO_DEL, IGNORE_DEPS, NULL);
 #endif
 
-    if (calc_order == BYROWS) {
+    if (get_conf_int("calc_order") == BYROWS) {
         for (r = minr; r <= maxr; r++)
             for (c = minc; c <= maxc; c++) {
                 n = lookat(sh, r, c);
@@ -1378,7 +1430,7 @@ void fill(struct sheet * sh, struct ent * v1, struct ent * v2, double start, dou
                 n->flags &= ~(iscleared);
             }
     }
-    else if (calc_order == BYCOLS) {
+    else if (get_conf_int("calc_order") == BYCOLS) {
         for (c = minc; c <= maxc; c++)
             for (r = minr; r <= maxr; r++) {
                 n = lookat(sh, r, c);
@@ -1977,10 +2029,12 @@ void decompile(struct enode *e, int priority) {
 
     case SUM    : index_arg("@sum", e); break;
     case SUMTIME    : index_arg("@sumtime", e); break;
+    case SUMPROD: index_two_range_arg("@sumprod", e); break;
     case PROD   : index_arg("@prod", e); break;
     case AVG    : index_arg("@avg", e); break;
     case COUNT  : index_arg("@count", e); break;
     case STDDEV : index_arg("@stddev", e); break;
+    case MEDIAN : index_arg("@median", e); break;
     case MAX    : index_arg("@max", e); break;
     case MIN    : index_arg("@min", e); break;
     case REDUCE | 'R': range_arg("@rows(", e); break;
@@ -2032,11 +2086,29 @@ void decompile(struct enode *e, int priority) {
     case DTS:   three_arg("@dts(", e); break;
     case TTS:   three_arg("@tts(", e); break;
     case STON:  one_arg("@ston(", e); break;
+    case FIND:
+                if(e->e.o.right->e.o.left){
+                    three_arg("@find(", e); break;
+                }else{
+                    two_arg("@find(", e); break;}
     case ASCII: one_arg("@ascii(", e); break;
     case SLEN:  one_arg("@slen(", e); break;
     case HMSTOSEC:  one_arg("@hmstosec(", e); break;
     case SECTOHMS:  one_arg("@sectohms(", e); break;
     case EQS:   two_arg("@eqs(", e); break;
+    case XRAND: one_arg("@rexp(", e); break;
+    case PRAND: one_arg("@rpois(", e); break;
+    case RAND:
+            if (e->e.o.left && e->e.o.right){
+                two_arg("@rand(", e); break;
+            } else if (e->e.o.left){
+                for (s = "@rand"; (line[linelim++] = *s++); );
+                linelim--; break;
+            }
+            break;
+    case NRAND:
+                for (s = "@rnorm"; (line[linelim++] = *s++); );
+                linelim--; break;
     case LMAX:  list_arg("@max(", e); break;
     case LMIN:  list_arg("@min(", e); break;
     case FV:    three_arg("@fv(", e); break;
@@ -2163,6 +2235,19 @@ void index_arg(char *s, struct enode *e) {
     line[linelim++] = ')';
 }
 
+void index_two_range_arg(char *s, struct enode *e) {
+    for (; (line[linelim++] = *s++); );
+    linelim--;
+    range_arg("(", e->e.o.left);
+    linelim--;
+    range_arg(",", e->e.o.right->e.o.left);
+    linelim--;
+    if (e->e.o.right->e.o.right) {
+        line[linelim++] = ',';
+        decompile(e->e.o.right->e.o.right, 0);
+    }
+    line[linelim++] = ')';
+}
 
 /**
  * \brief two_arg_index()

@@ -317,9 +317,11 @@ token S_YANKCOL
 %token K_INVALID
 %token K_FIXED
 %token K_SUM
+%token K_SUMPROD
 %token K_PROD
 %token K_AVG
 %token K_STDDEV
+%token K_MEDIAN
 %token K_COUNT
 %token K_ROWS
 %token K_COLS
@@ -387,6 +389,11 @@ token S_YANKCOL
 %token K_INDEX
 %token K_STINDEX
 %token K_GETENT
+%token K_RAND
+%token K_NRAND
+%token K_XRAND
+%token K_PRAND
+%token K_CALC_ORDER
 /*
 token K_AUTO
 token K_AUTOINSERT
@@ -431,6 +438,7 @@ token K_COLORERR
 %token K_ASCII
 %token K_CHR
 %token K_FACT
+%token K_FIND
 
 
 %right ';'
@@ -1326,6 +1334,14 @@ term:   var                       {
                                   { $$ = new(SUM, new_range(REDUCE | SUM, $4), ENULL); }
         | '@' K_SUM  '(' range ',' e ')'
                                   { $$ = new(SUM, new_range(REDUCE | SUM, $4), $6); }
+        | '@' K_SUMPROD '(' range ',' range ')'
+                                  { $$ = new(SUMPROD, new_range(REDUCE | SUMPROD, $4),
+                                                      new(',',new_range(REDUCE | SUMPROD, $6),ENULL)); }
+        | '@' K_SUMPROD '(' range ',' range ',' e ')'
+                                  { $$ = new(SUMPROD, new_range(REDUCE | SUMPROD, $4),
+                                                      new(',', new_range(REDUCE | SUMPROD, $6), $8)); }
+        | '@' K_MEDIAN '(' var_or_range ')'
+                                  { $$ = new(MEDIAN, new_range(REDUCE | MEDIAN, $4), ENULL); }
         | '@' K_PROD '(' var_or_range ')'
                                   { $$ = new(PROD, new_range(REDUCE | PROD, $4), ENULL); }
         | '@' K_PROD  '(' range ',' e ')'
@@ -1412,6 +1428,16 @@ term:   var                       {
         | '@' K_SLEN '(' e ')'    { $$ = new(SLEN, $4, ENULL); }
         | '@' K_EQS '(' e ',' e ')'
                                   { $$ = new(EQS, $4, $6); }
+        | '@' K_RAND
+                                  { $$ = new(RAND, ENULL, ENULL); }
+        | '@' K_RAND '(' e ',' e ')'
+                                  { $$ = new(RAND, $4, $6); }
+        | '@' K_NRAND
+                                  { $$ = new(NRAND, ENULL, ENULL); }
+        | '@' K_XRAND '(' e ')'
+                                  { $$ = new(XRAND, $4, ENULL); }
+        | '@' K_PRAND '(' e ')'
+                                  { $$ = new(PRAND, $4, ENULL); }
         | '@' K_DATE '(' e ')'    { $$ = new(DATE, $4, ENULL); }
         | '@' K_DATE '(' e ',' e ')'
                                   { $$ = new(DATE, $4, $6); }
@@ -1473,6 +1499,10 @@ term:   var                       {
         | '@' K_SEVALUATE '(' e ')' { $$ = new(SEVALUATE, $4, ENULL); }
         | '@' K_SUBSTR '(' e ',' e ',' e ')'
                                   { $$ = new(SUBSTR, $4, new(',', $6, $8)); }
+        | '@' K_FIND '(' e ',' e ')'
+                                  { $$ = new(FIND, $4, $6 ); }
+        | '@' K_FIND '(' e ',' e ',' e ')'
+                                  { $$ = new(FIND, $4, new(',', $6 , $8 )); }
         |       '(' e ')'         { $$ = $2; }
         |       '+' term          { $$ = $2; }
     //    |       '-' term          { $$ = new('m', $2, ENULL); }
@@ -1825,5 +1855,16 @@ setitem :
 
 #endif
                                                    }
+    |    K_CALC_ORDER '=' strarg  {
+                                              char cmd[MAXCMD];
+                                              char * s = (char *) $3;
+                                              if (!strcasecmp(s,"byrows"))
+                                                    parse_str(user_conf_d, "calc_order=2", TRUE);
+                                              else if (!strcasecmp(s,"bycols"))
+                                                    parse_str(user_conf_d, "calc_order=1", TRUE);
+                                              else
+                                                    sc_error("invalid parameter: %s",s);
+                                              scxfree(s);
+                                              }
 
     ;

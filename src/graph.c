@@ -70,6 +70,7 @@
 #include "xmalloc.h"   // for scxfree
 #include "macros.h"
 #include "trigger.h"
+#include "conf.h"
 
 extern jmp_buf fpe_save;
 extern int cellerror;    /* is there an error in this cell - TODO get rid of this */
@@ -671,11 +672,11 @@ void rebuild_graph() {
     graph = GraphCreate();
 
     while (sh != NULL) {
-        fb = calc_order == BYROWS ? sh->maxrow : sh->maxcol;
-        gb = calc_order == BYROWS ? sh->maxcol : sh->maxrow;
+        fb = get_conf_int("calc_order") == BYROWS ? sh->maxrow : sh->maxcol;
+        gb = get_conf_int("calc_order") == BYROWS ? sh->maxcol : sh->maxrow;
         for (first = 0; first <= fb; first++)
             for (second = 0; second <= gb; second++) {
-                p = *ATBL(sh, sh->tbl, calc_order == BYROWS ? first : second, calc_order == BYROWS ? second : first);
+                p = *ATBL(sh, sh->tbl, get_conf_int("calc_order") == BYROWS ? first : second, get_conf_int("calc_order") == BYROWS ? second : first);
                 if (p && p->expr) {
                     EvalJustOneVertex(sh, p, 1);
                     //sc_debug("Expr %d %d", p->row, p->col);
@@ -749,7 +750,7 @@ void EvalRange(struct sheet * sh, int tlrow, int tlcol, int brrow, int brcol) {
     int i, fa, fb, ga, gb, first, second;
     struct ent * e, * f;
 
-    if (calc_order == BYROWS)
+    if (get_conf_int("calc_order") == BYROWS)
         fa = tlrow, fb = brrow, ga = tlcol, gb = brcol;
     else
         fa = tlcol, fb = brcol, ga = tlrow, gb = brrow;
@@ -757,7 +758,7 @@ void EvalRange(struct sheet * sh, int tlrow, int tlcol, int brrow, int brcol) {
     for (first = fa; first <= fb; first++) {
         for (second = ga; second <= gb; second++) {
             // eval the cell
-            e = *ATBL(sh, sh->tbl, calc_order == BYROWS ? first : second, calc_order == BYROWS ? second : first);
+            e = *ATBL(sh, sh->tbl, get_conf_int("calc_order") == BYROWS ? first : second, get_conf_int("calc_order") == BYROWS ? second : first);
 
             if (!e) continue;
             if (e->expr) EvalJustOneVertex(sh, e, 0);

@@ -397,6 +397,13 @@ struct go_save {
 #define HMSTOSEC    (OP_BASE + 89)
 #define SECTOHMS    (OP_BASE + 90)
 #define SUMTIME    (OP_BASE + 91)
+#define RAND        (OP_BASE + 92)
+#define NRAND       (OP_BASE + 93)
+#define XRAND       (OP_BASE + 94)
+#define PRAND       (OP_BASE + 95)
+#define FIND        (OP_BASE + 96)
+#define MEDIAN      (OP_BASE + 97)
+#define SUMPROD     (OP_BASE + 98)
 
 /* flag values */
 #define is_valid      0001
@@ -458,7 +465,6 @@ extern int skipautorun;
 extern char * fkey[FKEYS];
 extern char * scext;
 extern int repct;
-extern int calc_order;
 extern double prescale;
 extern int propagation;
 extern int optimize;

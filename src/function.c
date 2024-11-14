@@ -384,6 +384,48 @@ double doprod(struct sheet * sh, int minr, int minc, int maxr, int maxc, struct 
     return v;
 }
 
+/**
+ * \brief dosumprod()
+ * \details sum the products of the corresponding rows.
+ * \param[in] minr, minc
+ * \param[in] maxr, maxc
+ * \param[in] minr2, minc2
+ * \param[in] maxr2, maxc2
+ * \param[in] e
+ * \return double
+ */
+double dosumprod(struct sheet * sh, int minr, int minc, int maxr, int maxc,
+        int minr2, int minc2, int maxr2, int maxc2, struct enode * e){
+    if(maxr-minr != maxr2-minr2 || maxc-minc != maxc2-minc2)
+        sc_error("sumprod: ranges do not match");
+    int r, c;
+    int r2, c2;
+    int cellerr = CELLOK;
+    struct ent * p;
+    double v=0,v2=0;
+    double ret=0;
+    for (r = minr,r2=minr2; r <= maxr; r++,r2++)
+        for (c = minc, c2=minc2; c <= maxc; c++, c2++) {
+            if (e) {
+                rowoffset = r - minr;
+                coloffset = c - minc;
+            }
+            if ( !e || eval(sh, NULL, e, 0)){
+                if ((p = *ATBL(sh, sh->tbl, r, c)) && p->flags & is_valid) {
+                    if (p->cellerror) cellerr = CELLINVALID;
+                    v = p->v;
+                }
+                if ((p = *ATBL(sh, sh->tbl, r2, c2)) && p->flags & is_valid) {
+                    if (p->cellerror) cellerr = CELLINVALID;
+                    v2 = p->v;
+                }
+                ret+=v*v2;
+            }
+        }
+    cellerror = cellerr;
+    rowoffset = coloffset = 0;
+    return ret;
+}
 
 /**
  * \brief doavg()
@@ -1177,9 +1219,6 @@ double rint(double d) {
 }
 #endif
 
-
-
-
 /**
  * \brief dohmstosec()
  *
@@ -1332,3 +1371,262 @@ char * dosumtime(struct sheet * sh, int minr, int minc, int maxr, int maxc, stru
     return (strcpy(scxmalloc( (size_t) (strlen(ret) + 1)), ret));
 }
 
+typedef uint64_t u8;
+typedef uint16_t u2;
+typedef struct ranct { u8 a; u8 b; u8 c; u8 d; u8 seed; u2 start; } ranctx;
+
+#define rot64(x,k) (((x)<<(k))|((x)>>(64-(k))))
+
+u8 ranval( ranctx *x );
+void raninit( ranctx *x);
+void getseed(ranctx * state);
+
+/**
+ * \brief dorand
+ *
+ * \details JSF Small fast PRNG
+ * Takes case to seed only once
+ * Can take seed from SCIM_RAND_SEED for testing
+ * Takes seed from /dev/random and skips a random number or
+ * first values for added randomisation
+ * Range is selected with unsophisticated modulo operation
+ * which can introduce small low number bias - mimimal with high RAND_MAX
+ * and good quality PRNG
+ * Similarly, rescaling to [0-1] by dividine by max rand.
+ *
+ * dist = 0 : uniformly distributed decimals range 0 - 1
+ * dist = 1 "           "      whole numbers range min - max
+ * dist = 2 normally       "     decimals range 0 - -1
+ * dist = 3 + lambda  expontial distribution [0-1]
+ * dist = 4 + mean    poisson distribution
+ *
+ * \param[in] int int
+ * \param[in] double double
+ * \return double
+ */
+double dorand(int min,int max,double param,double dist){
+    static ranctx  x;
+    double ret;
+
+    if(min>max){
+        sc_info("@rand: invalid input");
+        return 0;
+    }
+    if(x.b==0 && x.c==0 && x.d == 0){
+        x.a = 0xf1ea5eed;
+        getseed(&x);
+        for (int i=x.start;i>0;i--)
+            (void)ranval(&x);
+    }
+    if(x.a == 0xf1ea5eed){
+        sc_error("rand: failed to initialise\n");
+        return 0;
+    }
+    switch((int)dist){
+        case 0:  // uniform [0-1]
+            ret=(double)ranval(&x)/0xffffffffffffffff;
+            break;
+        case 1: // uniform [max-min]
+            ret=(double)((u8)ranval(&x) % (max+1 -min ))+(double)min;
+            break;
+        case 2:
+            // box_muller normal dist. var=1 mean=0
+            double R1;
+            static double R2;
+            static int pending=0;
+            if(pending==1){
+                pending=0;
+                ret= R2;
+            } else {
+                double U=(double)ranval(&x)/0xffffffffffffffff;
+                double V=(double)ranval(&x)/0xffffffffffffffff;
+                R1=sqrt(-2*log(U))* cos(2 *M_PI *V);
+                R2=sqrt(-2*log(U))* sin(2 *M_PI *V);
+                pending=1;
+                ret= R1;
+            }
+            break;
+        case 3: // exponenential.  param is lambda
+            double U=(double)ranval(&x)/0xffffffffffffffff;
+            ret=log(1-U)/(-1*param);
+            break;
+        case 4: // poisson. param is mean
+            double L = exp(-param);
+            double p = 1;
+            int result = 0;
+            do {
+                result++;
+                p *= (double)ranval(&x)/0xffffffffffffffff;
+            } while (p > L);
+            result--;
+            ret= (double)result;
+            break;
+    }
+    return ret;
+}
+//******** Support functions for dorand
+u8 ranval( ranctx *x ) {
+    u8 e = x->a - rot64(x->b, 7);
+    x->a = x->b ^ rot64(x->c, 13);
+    x->b = x->c + rot64(x->d, 37);
+    x->c = x->d + e;
+    x->d = e + x->a;
+    return x->d;
+}
+
+void raninit( ranctx *x) {
+    u8 i;
+    x->a = 0xf1ea5eed, x->b = x->c = x->d = x->seed;
+    for (i=0; i<20; ++i) {
+        (void)ranval(x);
+    }
+}
+
+#include <errno.h>
+void getseed(ranctx * x)
+{
+    const char filename[] = "/dev/random";
+    FILE *dr;
+    int gotseed=0;
+    u8 seed;
+    uint16_t start;
+    const char *env_p = getenv("SCIM_RAND_SEED");
+    errno=0;
+    char * endptr;
+    if(env_p != NULL && strlen(env_p)>0){
+        u8 val = strtol(env_p, &endptr, 10);
+        if(errno==0 && (env_p!=endptr) && (*endptr=='\0')){ // got a number from env
+            x->seed=val;
+            x->start=0;
+            gotseed=1;
+        }
+    }
+    if(gotseed==0){  // not very elegant!
+        dr = fopen(filename,"r");
+        if(dr==NULL){
+            sc_error("rand: unable to open /dev/random");
+            return;
+        } else {
+            fread(&seed,sizeof(u8),1,dr);
+            x->seed = seed;
+            fread(&start,sizeof(uint16_t),1,dr);
+            x->start = start;
+            fclose(dr);
+        }
+    }
+    sc_debug("rand: setting seed to %u",seed);
+    raninit(x);
+    return;
+}
+
+// **********************************************8
+//
+void str_rev (char *st)  ;
+
+/**
+ * \brief dofind()
+ * \details Returns the instance^th occurrence of label in s
+ * counting from the end if instance is negative/
+ * \param[in] char *
+ * \param[in] char *
+ * \param[in] int
+ * \return double
+ */
+double dofind(char * label,char *s, int instance){
+    char * res;
+    double ret=0;
+    int index=instance;
+    if(instance==0)index=1;
+    char buf[BUFFERSIZE];
+    strlcpy(buf,s,sizeof(buf));
+    if(instance<0){
+        str_rev(buf);
+        index*= -1;
+    }
+    char *p=buf;
+    for (int i = 0;i < index;i++){
+        if ((res = strstr(p,label)) != NULL){
+                ret+=(double) ((res - p  +1 ));
+                p=res+1;
+        } else
+            ret = (double)0;
+    }
+    if(instance < 0 && ret > 0)
+        ret=strlen(s)-ret+1;
+    scxfree(label);
+    scxfree(s);
+    return ret;
+}
+
+
+void str_rev (char *st) {
+    int len, i;
+    char *start, *end, temp;
+
+    len = strlen (st);
+    start = st;
+    end = st;
+
+    for (i = 0; i < len - 1; i++)
+    end++;
+    for (i = 0; i < len/2; i++)  {
+        temp = *end;
+        *end = *start;
+        *start = temp;
+        start++;
+        end--;
+    }
+}
+
+int compare_doubles(const void * a, const void * b);
+
+/**
+ * \brief domedian
+ *
+ * \details uses a simple quicksort method.  The mean of the middle
+ * two values is used when the number of cases is even.
+ *
+ * \param[in] sheet *
+ * \param[in] int int int in
+ * \param[in] enode *
+ * \return double
+ */
+double domedian(struct sheet * sh, int minr, int minc, int maxr, int maxc, struct enode * e) {
+    int r,c,tot=0;
+    double ret;
+    struct ent * p;
+    double * values;
+    values = (double *) scxmalloc((maxr - minr + 1) * (maxc-minc + 1)* sizeof(double) );
+
+    for (r = minr; r <= maxr; r++)
+        for(c = minc; c <= maxc; c++){
+            if(e){
+                rowoffset = r - minr;
+                coloffset = c - minc;
+            }
+            if (!e || eval(sh, NULL, e, 0))
+                if ((p = *ATBL(sh, sh->tbl, r, c)) && p->flags & is_valid){
+                    if (p->cellerror)
+                        cellerror = CELLINVALID;
+                    values[tot] = p->v;
+                    tot++;
+                }
+        }
+    qsort(values, tot, sizeof(double), compare_doubles);
+    if (tot % 2 == 0)
+        ret=((values[ tot / 2  -1 ] + values[tot / 2 ]) / 2); // take account of the 0 indexing
+    else
+        ret = (values[tot / 2  ]);
+    rowoffset = coloffset = 0;
+    scxfree((char *) values);
+    return ret;
+}
+
+int compare_doubles(const void * a, const void * b){
+    double i = *((double *)a);
+    double j = *((double *)b);
+
+    double diff = i - j;
+
+    return (diff > 0 ? 1 : diff < 0 ? -1 : 0);
+}

@@ -38,9 +38,9 @@ assert_iffound_notcond ${NAME}_vallog "Invalid free() / delete"
 }
 assert "echo -e '${CMD}' | $VALGRIND_CMD ../src/sc-im  --nocurses --nodebug --quit_afterload 2>&1 |grep -v '^$\|Interp\|Change\|wider'" $EXP
 check_log
-mv ${NAME}_vallog ${NAME}_1_vallog
+cp ${NAME}_vallog ${NAME}_1_vallog
 assert "echo -e '${CMD}' | $VALGRIND_CMD ../src/sc-im ${NAME}.sc  --nocurses --nodebug --quit_afterload 2>&1 |grep -v '^$\|Interp\|Change\|wider'" $EXP
-mv ${NAME}_vallog ${NAME}_2_vallog
+cp ${NAME}_vallog ${NAME}_2_vallog
 check_log
 
 if [ "$1" != "keep-vallog" ];then
