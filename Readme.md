@@ -24,6 +24,7 @@
   - fix for spurious second document
 - cross sheet spurious circular reference fix (crude, more TODO)
 - fix for segfault and infinite loop in incorrect input in `@replace`
+- fix for args to `getent` not evaluating and segfault
 
 # NOTE 06/01/2023:
 This project needs some help.

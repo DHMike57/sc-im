@@ -1380,6 +1380,8 @@ typedef struct ranct { u8 a; u8 b; u8 c; u8 d; u8 seed; u2 start; } ranctx;
 u8 ranval( ranctx *x );
 void raninit( ranctx *x);
 void getseed(ranctx * state);
+double int_to_double(uint64_t random);
+#define RMAX 0xffffffffffffffff
 
 /**
  * \brief dorand
@@ -1389,12 +1391,10 @@ void getseed(ranctx * state);
  * Can take seed from SCIM_RAND_SEED for testing
  * Takes seed from /dev/random and skips a random number or
  * first values for added randomisation
- * Range is selected with unsophisticated modulo operation
- * which can introduce small low number bias - mimimal with high RAND_MAX
- * and good quality PRNG
- * Similarly, rescaling to [0-1] by dividine by max rand.
+ * Range is selected to avoid (minimal!) modulo bias
+ * rescaling to [0-1] by building double with bit operations
  *
- * dist = 0 : uniformly distributed decimals range 0 - 1
+ * dist = 0 : uniformly distributed decimals range [0,1)
  * dist = 1 "           "      whole numbers range min - max
  * dist = 2 normally       "     decimals range 0 - -1
  * dist = 3 + lambda  expontial distribution [0-1]
@@ -1424,10 +1424,17 @@ double dorand(int min,int max,double param,double dist){
     }
     switch((int)dist){
         case 0:  // uniform [0-1]
-            ret=(double)ranval(&x)/0xffffffffffffffff;
+            ret=int_to_double(ranval(&x));
             break;
         case 1: // uniform [max-min]
-            ret=(double)((u8)ranval(&x) % (max+1 -min ))+(double)min;
+                // modulo bias will be tiny, but to do it right:
+            int n = max + 1 - min;
+            u8 y;
+            int64_t cmp=RMAX - ( ( ( RMAX % n ) + 1 ) % n);
+            do {
+                y=ranval(&x);
+            } while (y > cmp);
+            ret=(double)(y % n)+(double)min;
             break;
         case 2:
             // box_muller normal dist. var=1 mean=0
@@ -1438,16 +1445,16 @@ double dorand(int min,int max,double param,double dist){
                 pending=0;
                 ret= R2;
             } else {
-                double U=(double)ranval(&x)/0xffffffffffffffff;
-                double V=(double)ranval(&x)/0xffffffffffffffff;
+                double U=int_to_double(ranval(&x));
+                double V=int_to_double(ranval(&x));
                 R1=sqrt(-2*log(U))* cos(2 *M_PI *V);
                 R2=sqrt(-2*log(U))* sin(2 *M_PI *V);
                 pending=1;
                 ret= R1;
             }
             break;
-        case 3: // exponenential.  param is lambda
-            double U=(double)ranval(&x)/0xffffffffffffffff;
+        case 3: // exponential.  param is lambda
+            double U=int_to_double(ranval(&x));
             ret=log(1-U)/(-1*param);
             break;
         case 4: // poisson. param is mean
@@ -1456,7 +1463,7 @@ double dorand(int min,int max,double param,double dist){
             int result = 0;
             do {
                 result++;
-                p *= (double)ranval(&x)/0xffffffffffffffff;
+                p *= int_to_double(ranval(&x));
             } while (p > L);
             result--;
             ret= (double)result;
@@ -1472,6 +1479,16 @@ u8 ranval( ranctx *x ) {
     x->c = x->d + e;
     x->d = e + x->a;
     return x->d;
+}
+
+// use 52 random bits to make a double between [1,2)
+// set exponent to 0
+// subtract 1
+// see https://blog.bithole.dev/blogposts/random-float/
+double int_to_double(uint64_t random) {
+    // 1023 represents 0 exponent, right shifted 52
+    union { uint64_t u64; double f; } u = { .u64 = random >> 12 | 0x3FF0000000000000 };
+    return u.f - 1.0;
 }
 
 void raninit( ranctx *x) {
