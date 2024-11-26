@@ -75,7 +75,7 @@ assert_end() {
     tests_endtime="$(date +%s%N)"
     # required visible decimal place for seconds (leading zeros if needed)
     local tests_time="$( \
-        printf "%010d" "$(( ${tests_endtime/%N/000000000} 
+        printf "%010d" "$(( ${tests_endtime/%N/000000000}
                             - ${tests_starttime/%N/000000000} ))")"  # in ns
     tests="$tests_ran ${*:+$* }tests"
     [[ -n "$DISCOVERONLY" ]] && echo "collected $tests." && _assert_reset && return
@@ -111,7 +111,7 @@ assert() {
     result="$(sed -e :a -e '$!N;s/\n/\\n/;ta' <<< "$result")"
     [[ -z "$result" ]] && result="nothing" || result="\"$result\""
     [[ -z "$2" ]] && expected="nothing" || expected="\"$2\""
-    _assert_fail "expected $expected${_indent}got $result" "$1" "$3"
+    _assert_fail "expected $expected${_indent}got      $result" "$1" "$3"
 }
 
 # Check in file ($1) for a pattern ($2)

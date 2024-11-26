@@ -325,10 +325,43 @@ double eval(struct sheet * sh, struct ent * ent, struct enode * e, int rebuild_g
         int r, c, row, col;
         int maxr, maxc;
         int minr, minc;
-        maxr = e->e.o.left->e.r.right.vp->row;
-        maxc = e->e.o.left->e.r.right.vp->col;
-        minr = e->e.o.left->e.r.left.vp->row;
-        minc = e->e.o.left->e.r.left.vp->col;
+        if(e->e.o.left->e.r.right.expr == NULL){
+            maxr = e->e.o.left->e.r.right.vp->row;
+            maxc = e->e.o.left->e.r.right.vp->col;
+        }else {
+            maxr = eval(sh,ent,e->e.o.left->e.r.right.expr->e.o.left,rebuild_graph);
+            maxc = eval(sh,ent,e->e.o.left->e.r.right.expr->e.o.right,rebuild_graph);
+            // find the address of the cell with an expression defining a range limit and add it
+            // to the graph if it exits.  Should probably have some intermediate variables for
+            // readability.
+            if(e->e.o.left->e.r.right.expr->e.o.left->e.v.vp != NULL)
+                GraphAddEdge(getVertex(graph, sh, lookat(sh, ent->row, ent->col), 1),
+                        // digging deep to get the row/col of the cell we depend on
+                        getVertex(graph, sh, lookat(sh, e->e.o.left->e.r.right.expr->e.o.left->e.v.vp->row, e->e.o.left->e.r.right.expr->e.o.left->e.v.vp->row), 1));
+            if(e->e.o.left->e.r.right.expr->e.o.right->e.v.vp != NULL)
+                GraphAddEdge(getVertex(graph, sh, lookat(sh, ent->row, ent->col), 1),
+                        getVertex(graph, sh, lookat(sh, e->e.o.left->e.r.right.expr->e.o.left->e.v.vp->row, e->e.o.left->e.r.right.expr->e.o.right->e.v.vp->row), 1));
+        }
+        if(e->e.o.left->e.r.left.expr == NULL){
+            minr = e->e.o.left->e.r.left.vp->row;
+            minc = e->e.o.left->e.r.left.vp->col;
+        }else {
+            minr = eval(sh,ent,e->e.o.left->e.r.left.expr->e.o.left,rebuild_graph);
+            minc = eval(sh,ent,e->e.o.left->e.r.left.expr->e.o.right,rebuild_graph);
+            if(e->e.o.left->e.r.left.expr->e.o.left->e.v.vp != NULL)
+                GraphAddEdge(getVertex(graph, sh, lookat(sh, ent->row, ent->col), 1),
+                        getVertex(graph, sh, lookat(sh, e->e.o.left->e.r.left.expr->e.o.left->e.v.vp->row, e->e.o.left->e.r.left.expr->e.o.left->e.v.vp->row), 1));
+            if(e->e.o.left->e.r.left.expr->e.o.right->e.v.vp != NULL)
+                GraphAddEdge(getVertex(graph, sh, lookat(sh, ent->row, ent->col), 1),
+                        getVertex(graph, sh, lookat(sh, e->e.o.left->e.r.left.expr->e.o.right->e.v.vp->row, e->e.o.left->e.r.left.expr->e.o.right->e.v.vp->row), 1));
+        }
+        //  same as above but rebuilds the whole graph every time
+        //maxr = e->e.o.left->e.r.right.expr == NULL ? e->e.o.left->e.r.right.vp->row : eval(sh,ent,e->e.o.left->e.r.right.expr->e.o.left,1);
+        //maxc = e->e.o.left->e.r.right.expr == NULL ? e->e.o.left->e.r.right.vp->col : eval(sh,ent,e->e.o.left->e.r.right.expr->e.o.right,1);
+        //minr = e->e.o.left->e.r.left.expr  == NULL ? e->e.o.left->e.r.left.vp->row  : eval(sh,ent,e->e.o.left->e.r.left.expr->e.o.left,1);
+        //minc = e->e.o.left->e.r.left.expr  == NULL ? e->e.o.left->e.r.left.vp->col  : eval(sh,ent,e->e.o.left->e.r.left.expr->e.o.right,1);
+        //
+
         if (minr>maxr) r = maxr, maxr = minr, minr = r;
         if (minc>maxc) c = maxc, maxc = minc, minc = c;
 
@@ -375,10 +408,14 @@ double eval(struct sheet * sh, struct ent * ent, struct enode * e, int rebuild_g
                 int r2, c2, row2, col2;
                 int maxr2, maxc2;
                 int minr2, minc2;
-                maxr2 = e->e.o.right->e.o.left->e.r.left.vp->row;
-                maxc2 = e->e.o.right->e.o.left->e.r.left.vp->col;
-                minr2 = e->e.o.right->e.o.left->e.r.right.vp->row;
-                minc2 = e->e.o.right->e.o.left->e.r.right.vp->col;
+               // maxr2 = e->e.o.right->e.o.left->e.r.left.vp->row;
+               // maxc2 = e->e.o.right->e.o.left->e.r.left.vp->col;
+               // minr2 = e->e.o.right->e.o.left->e.r.right.vp->row;
+               // minc2 = e->e.o.right->e.o.left->e.r.right.vp->col;
+                maxr2 = e->e.o.right->e.o.left->e.r.left.expr == NULL ? e->e.o.right->e.o.left->e.r.left.vp->row : eval(sh,ent,e->e.o.right->e.o.left->e.r.left.expr->e.o.left,1);
+                maxc2 = e->e.o.right->e.o.left->e.r.left.expr == NULL ? e->e.o.right->e.o.left->e.r.left.vp->col : eval(sh,ent,e->e.o.right->e.o.left->e.r.left.expr->e.o.right,1);
+                minr2 = e->e.o.right->e.o.left->e.r.right.expr  == NULL ? e->e.o.right->e.o.left->e.r.right.vp->row  : eval(sh,ent,e->e.o.right->e.o.left->e.r.right.expr->e.o.left,1);
+                minc2 = e->e.o.right->e.o.left->e.r.right.expr  == NULL ? e->e.o.right->e.o.left->e.r.right.vp->col  : eval(sh,ent,e->e.o.right->e.o.left->e.r.right.expr->e.o.right,1);
                 if (minr2>maxr2) r2 = maxr2, maxr2 = minr2, minr2 = r2;
                 if (minc2>maxc2) c2 = maxc2, maxc2 = minc2, minc2 = c2;
 
